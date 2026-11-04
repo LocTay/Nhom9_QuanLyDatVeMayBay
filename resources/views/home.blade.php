@@ -237,6 +237,32 @@
     <header>
         <div class="logo">✈ SkyBooking</div>
 
+        
+<nav>
+    <a href="/">Trang chủ</a>
+    <a href="#datve">Tìm chuyến bay</a>
+    <a href="#tienich">Tiện ích</a>
+    <a href="{{ route('ticket.lookup.form') }}">Tra cứu vé</a>
+    <a href="#footer">Liên hệ</a>
+
+    @guest
+        <a href="{{ route('login') }}" class="login">Đăng nhập</a>
+        <a href="{{ route('register') }}">Đăng ký</a>
+    @else
+        <span>Xin chào, {{ Auth::user()->name }}</span>
+        <a href="{{ route('profile.index') }}">Tài khoản của tôi</a>
+        <form action="{{ route('logout') }}" method="POST"
+              style="display: inline;">
+            @csrf
+            <button type="submit" class="login"
+                    style="border: none; cursor: pointer;">
+                Đăng xuất
+            </button>
+        </form>
+    @endguest
+    
+</nav>
+
         <nav>
             <a href="/">Trang chủ</a>
             <a href="#datve">Tìm chuyến bay</a>
@@ -260,7 +286,7 @@
     <section class="booking" id="datve">
         <h2>Tìm chuyến bay</h2>
 
-        <form action="{{ route('flights.search') }}" method="GET">
+        <form id="formTimChuyenBay" action="{{ route('flights.search') }}" method="GET">
             <div class="trip-type">
                 <label>
                     <input type="radio" name="loai_chuyen" value="mot_chieu" checked>
@@ -413,7 +439,9 @@
 
         capNhatNgayVe();
 
-        document.querySelector('#datve form').addEventListener('submit', function (e) {
+
+document.querySelector('#formTimChuyenBay').addEventListener('submit', function (e) {
+
             const diemDi = document.getElementById('diem_di').value;
             const diemDen = document.getElementById('diem_den').value;
 
