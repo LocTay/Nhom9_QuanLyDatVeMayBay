@@ -1,21 +1,15 @@
-
 <?php
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
+
 use App\Http\Controllers\FlightController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AdminAirportController;
 
-/*
-Route::middleware(['role:admin'])->group(function () {
-    // Route dành cho Admin
-});
-
-Route::middleware(['role:staff,admin'])->group(function () {
-    // Route dành cho Staff và Admin
-});
-*/
-
+// Trang chu
 Route::get('/', function () {
     $sanBays = DB::table('airports')
         ->orderBy('city')
@@ -24,25 +18,73 @@ Route::get('/', function () {
     return view('home', compact('sanBays'));
 });
 
+// Tim chuyen bay
 Route::get('/flights', [FlightController::class, 'index'])
     ->name('flights.search');
 
-use App\Http\Controllers\PaymentController;
+// Dang ky
+Route::get('/register', [AuthController::class, 'showRegister'])
+    ->name('register');
 
-// Tra cứu vé
-Route::get('/tra-cuu-ve', [PaymentController::class, 'showLookupForm'])->name('ticket.lookup.form');
-Route::post('/tra-cuu-ve', [PaymentController::class, 'lookup'])->name('ticket.lookup');
+Route::post('/register', [AuthController::class, 'register'])
+    ->name('register.submit');
 
-// Xem chi tiết vé
-Route::get('/ve/{booking_code}', [PaymentController::class, 'showDetail'])->name('ticket.detail');
+// Dang nhap
+Route::get('/login', [AuthController::class, 'showLogin'])
+    ->name('login');
 
-// Mô phỏng thanh toán
-Route::post('/ve/{booking_code}/thanh-toan', [PaymentController::class, 'processPayment'])->name('ticket.payment');
+Route::post('/login', [AuthController::class, 'login'])
+    ->name('login.submit');
 
-// Hủy vé
-Route::post('/ve/{booking_code}/huy', [PaymentController::class, 'cancelTicket'])->name('ticket.cancel');
+Route::post('/logout', [AuthController::class, 'logout'])
+    ->name('logout');
 
-// Quản lý sân bay - chỉ Admin được truy cập
+// Quen mat khau
+Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])
+    ->name('password.request');
+
+Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])
+    ->name('password.email');
+
+// Dat lai mat khau
+Route::get('/reset-password/{token}', [AuthController::class, 'showResetPassword'])
+    ->name('password.reset');
+
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])
+    ->name('password.update');
+
+// Tra cuu ve
+Route::get('/tra-cuu-ve', [PaymentController::class, 'showLookupForm'])
+    ->name('ticket.lookup.form');
+
+Route::post('/tra-cuu-ve', [PaymentController::class, 'lookup'])
+    ->name('ticket.lookup');
+
+// Xem chi tiet ve
+Route::get('/ve/{booking_code}', [PaymentController::class, 'showDetail'])
+    ->name('ticket.detail');
+
+// Thanh toan
+Route::post('/ve/{booking_code}/thanh-toan', [PaymentController::class, 'processPayment'])
+    ->name('ticket.payment');
+
+// Huy ve
+Route::post('/ve/{booking_code}/huy', [PaymentController::class, 'cancelTicket'])
+    ->name('ticket.cancel');
+
+// Thong tin tai khoan
+Route::middleware('auth')->group(function () {
+    Route::get('/tai-khoan', [ProfileController::class, 'index'])
+        ->name('profile.index');
+
+    Route::get('/tai-khoan/chinh-sua', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
+
+    Route::put('/tai-khoan', [ProfileController::class, 'update'])
+        ->name('profile.update');
+});
+
+// Quan ly san bay - chi Admin
 Route::middleware(['role:admin'])
     ->prefix('admin')
     ->name('admin.')

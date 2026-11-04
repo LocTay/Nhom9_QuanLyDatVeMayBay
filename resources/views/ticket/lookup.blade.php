@@ -263,8 +263,9 @@
             </a>
 
             <span class="nav-text">
-                <i class="fas fa-headset me-2"></i>
-                Hỗ trợ khách hàng
+                <a href="{{ url('/') }}" class="btn btn-primary btn-action">
+                <i class="fas fa-home me-2"></i> Quay lại trang chủ
+            </a>
             </span>
         </div>
     </nav>
