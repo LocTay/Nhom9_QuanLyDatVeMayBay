@@ -98,10 +98,16 @@
             <button type="submit">Đăng nhập</button>
         </form>
 
-        <div class="link">
-            Chưa có tài khoản?
-            <a href="{{ route('register') }}">Đăng ký ngay</a>
-        </div>
+        
+<div class="link">
+    <a href="{{ route('password.request') }}">Quên mật khẩu?</a>
+</div>
+
+<div class="link">
+    Chưa có tài khoản?
+    <a href="{{ route('register') }}">Đăng ký ngay</a>
+</div>
+
     </div>
 </body>
 </html>
