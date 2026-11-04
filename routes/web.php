@@ -5,6 +5,16 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\FlightController;
 
+/*
+Route::middleware(['role:admin'])->group(function () {
+    // Route dành cho Admin
+});
+
+Route::middleware(['role:staff,admin'])->group(function () {
+    // Route dành cho Staff và Admin
+});
+*/
+
 Route::get('/', function () {
     $sanBays = DB::table('airports')
         ->orderBy('city')
@@ -16,7 +26,7 @@ Route::get('/', function () {
 Route::get('/flights', [FlightController::class, 'index'])
     ->name('flights.search');
 
-    use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PaymentController;
 
 // Tra cứu vé
 Route::get('/tra-cuu-ve', [PaymentController::class, 'showLookupForm'])->name('ticket.lookup.form');
