@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -44,6 +43,7 @@
             color: #344563;
             text-decoration: none;
             font-size: 14px;
+            font-weight: 500;
         }
 
         nav a:hover {
@@ -166,6 +166,14 @@
             padding: 25px 20px;
             border-radius: 10px;
             text-align: center;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            transition: transform 0.2s;
+        }
+
+        .benefit:hover {
+            transform: translateY(-3px);
         }
 
         .benefit .icon {
@@ -232,6 +240,8 @@
         <nav>
             <a href="/">Trang chủ</a>
             <a href="#datve">Tìm chuyến bay</a>
+            <!-- CHUYỂN TRỰC TIẾP TỚI TRANG LOOKUP -->
+            <a href="{{ route('ticket.lookup.form') }}">Tra cứu vé</a>
             <a href="#tienich">Tiện ích</a>
             <a href="#footer">Liên hệ</a>
             <a href="#" class="login">Đăng nhập</a>
@@ -246,6 +256,7 @@
         </p>
     </section>
 
+    <!-- KHỐI TÌM CHUYẾN BAY (Thành viên 1) -->
     <section class="booking" id="datve">
         <h2>Tìm chuyến bay</h2>
 
@@ -265,34 +276,27 @@
             <div class="form-grid">
                 <div class="field">
                     <label for="diem_di">Điểm khởi hành</label>
-                    
-                <select id="diem_di" name="diem_di" required>
-                    <option value="">-- Chọn điểm đi --</option>
-
-                    @foreach ($sanBays as $sanBay)
-                        <option value="{{ $sanBay->code }}">
-                            {{ $sanBay->city }} ({{ $sanBay->code }})
-                        </option>
-                    @endforeach
-                </select>
-
+                    <select id="diem_di" name="diem_di" required>
+                        <option value="">-- Chọn điểm đi --</option>
+                        @foreach ($sanBays as $sanBay)
+                            <option value="{{ $sanBay->code }}">
+                                {{ $sanBay->city }} ({{ $sanBay->code }})
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
 
                 <div class="field">
                     <label for="diem_den">Điểm đến</label>
-                        
-                <select id="diem_den" name="diem_den" required>
-                    <option value="">-- Chọn điểm đến --</option>
-
-                    @foreach ($sanBays as $sanBay)
-                        <option value="{{ $sanBay->code }}">
-                            {{ $sanBay->city }} ({{ $sanBay->code }})
-                        </option>
-                    @endforeach
-                </select>
-
-                    </div>
-                        
+                    <select id="diem_den" name="diem_den" required>
+                        <option value="">-- Chọn điểm đến --</option>
+                        @foreach ($sanBays as $sanBay)
+                            <option value="{{ $sanBay->code }}">
+                                {{ $sanBay->city }} ({{ $sanBay->code }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
 
                 <div class="field">
                     <label for="ngay_di">Ngày khởi hành</label>
@@ -331,27 +335,30 @@
         </form>
     </section>
 
+    <!-- KHỐI TIỆN ÍCH DỊCH VỤ -->
     <section class="benefits" id="tienich">
         <h2>Dịch vụ của SkyBooking</h2>
 
         <div class="benefit-grid">
-            <div class="benefit">
+            <a href="#datve" class="benefit">
                 <div class="icon">✈️</div>
                 <h3>Tìm chuyến bay</h3>
                 <p>Lựa chọn hành trình phù hợp với kế hoạch của bạn.</p>
-            </div>
+            </a>
 
-            <div class="benefit">
+            <!-- ĐIỀU HƯỚNG THẲNG TỚI TRANG LOOKUP (TICKET LOOKUP FORM) -->
+            <a href="{{ route('ticket.lookup.form') }}" class="benefit">
                 <div class="icon">🎫</div>
                 <h3>Quản lý đặt vé</h3>
-                <p>Hướng tới tra cứu thông tin đặt chỗ dễ dàng và thuận tiện.</p>
-            </div>
+                <p>Tra cứu thông tin đặt chỗ, kiểm tra vé điện tử dễ dàng.</p>
+            </a>
 
-            <div class="benefit">
+            <!-- ĐIỀU HƯỚNG THẲNG TỚI TRANG LOOKUP -->
+            <a href="{{ route('ticket.lookup.form') }}" class="benefit">
                 <div class="icon">💳</div>
                 <h3>Thanh toán tiện lợi</h3>
-                <p>Hỗ trợ xây dựng quy trình thanh toán mô phỏng cho dự án.</p>
-            </div>
+                <p>Mô phỏng quy trình thanh toán nhanh chóng và an toàn.</p>
+            </a>
         </div>
     </section>
 
@@ -406,7 +413,7 @@
 
         capNhatNgayVe();
 
-        document.querySelector('form').addEventListener('submit', function (e) {
+        document.querySelector('#datve form').addEventListener('submit', function (e) {
             const diemDi = document.getElementById('diem_di').value;
             const diemDen = document.getElementById('diem_den').value;
 
