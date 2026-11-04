@@ -241,7 +241,7 @@
         <a href="{{ route('register') }}">Đăng ký</a>
     @else
         <span>Xin chào, {{ Auth::user()->name }}</span>
-
+        <a href="{{ route('profile.index') }}">Tài khoản của tôi</a>
         <form action="{{ route('logout') }}" method="POST"
               style="display: inline;">
             @csrf
@@ -251,6 +251,7 @@
             </button>
         </form>
     @endguest
+    
 </nav>
 
     </header>

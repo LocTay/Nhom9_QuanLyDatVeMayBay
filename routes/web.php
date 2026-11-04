@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\FlightController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\AuthController;
-
+use App\Http\Controllers\ProfileController;
 // Trang chủ
 Route::get('/', function () {
     $sanBays = DB::table('airports')
@@ -68,3 +68,15 @@ Route::post('/ve/{booking_code}/thanh-toan', [PaymentController::class, 'process
 // Hủy vé
 Route::post('/ve/{booking_code}/huy', [PaymentController::class, 'cancelTicket'])
     ->name('ticket.cancel');
+// Trang thông tin tài khoản
+// Trang thông tin và chỉnh sửa tài khoản
+Route::middleware('auth')->group(function () {
+    Route::get('/tai-khoan', [ProfileController::class, 'index'])
+        ->name('profile.index');
+
+    Route::get('/tai-khoan/chinh-sua', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
+
+    Route::put('/tai-khoan', [ProfileController::class, 'update'])
+        ->name('profile.update');
+});
