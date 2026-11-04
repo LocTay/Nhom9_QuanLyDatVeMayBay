@@ -4,6 +4,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\FlightController;
+use App\Http\Controllers\AdminAirportController;
 
 /*
 Route::middleware(['role:admin'])->group(function () {
@@ -40,3 +41,12 @@ Route::post('/ve/{booking_code}/thanh-toan', [PaymentController::class, 'process
 
 // Hủy vé
 Route::post('/ve/{booking_code}/huy', [PaymentController::class, 'cancelTicket'])->name('ticket.cancel');
+
+// Quản lý sân bay - chỉ Admin được truy cập
+Route::middleware(['role:admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::resource('airports', AdminAirportController::class)
+            ->except(['show']);
+    });
