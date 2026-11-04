@@ -1,51 +1,76 @@
-```blade
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title>Thêm sân bay</title>
-</head>
-<body>
-    <h2>Thêm sân bay mới</h2>
+@extends('admin.airports.layout')
 
-    @if ($errors->any())
-        <ul style="color:red">
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    @endif
+@section('title', 'Thêm sân bay')
+@section('topbar-title', 'Thêm sân bay mới')
 
-    <form action="{{ route('admin.airports.store') }}" method="POST">
-        @csrf
+@section('content')
+    <div class="page-heading">
+        <small>Quản lý dữ liệu</small>
+        <h1>Thêm sân bay mới</h1>
+        <p>Nhập thông tin sân bay cần thêm vào hệ thống.</p>
+    </div>
 
-        <p>
-            <label>Mã sân bay:</label><br>
-            <input type="text" name="code" maxlength="3"
-                   value="{{ old('code') }}" required>
-        </p>
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Thông tin sân bay</h2>
+        </div>
 
-        <p>
-            <label>Tên sân bay:</label><br>
-            <input type="text" name="name"
-                   value="{{ old('name') }}" required>
-        </p>
+        @if ($errors->any())
+            <div class="alert alert-error">
+                <strong>Vui lòng kiểm tra lại thông tin:</strong>
+                <ul style="margin: 8px 0 0 20px;">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
-        <p>
-            <label>Thành phố:</label><br>
-            <input type="text" name="city"
-                   value="{{ old('city') }}" required>
-        </p>
+        <form action="{{ route('admin.airports.store') }}" method="POST">
+            @csrf
 
-        <p>
-            <label>Quốc gia:</label><br>
-            <input type="text" name="country"
-                   value="{{ old('country', 'Việt Nam') }}" required>
-        </p>
+            <div class="form-group">
+                <label for="code">Mã sân bay</label>
+                <input id="code" type="text" name="code" maxlength="3"
+                       value="{{ old('code') }}" placeholder="Ví dụ: SGN" required>
+                @error('code')
+                    <div class="field-error">{{ $message }}</div>
+                @enderror
+            </div>
 
-        <button type="submit">Lưu sân bay</button>
-        <a href="{{ route('admin.airports.index') }}">Quay lại</a>
-    </form>
-</body>
-</html>
-```
+            <div class="form-group">
+                <label for="name">Tên sân bay</label>
+                <input id="name" type="text" name="name"
+                       value="{{ old('name') }}" placeholder="Tên sân bay" required>
+                @error('name')
+                    <div class="field-error">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="form-group">
+                <label for="city">Thành phố</label>
+                <input id="city" type="text" name="city"
+                       value="{{ old('city') }}" placeholder="Thành phố" required>
+                @error('city')
+                    <div class="field-error">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="form-group">
+                <label for="country">Quốc gia</label>
+                <input id="country" type="text" name="country"
+                       value="{{ old('country', 'Việt Nam') }}" required>
+                @error('country')
+                    <div class="field-error">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Lưu sân bay</button>
+                <a href="{{ route('admin.airports.index') }}" class="btn btn-secondary">
+                    Quay lại
+                </a>
+            </div>
+        </form>
+    </div>
+@endsection

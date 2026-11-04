@@ -1,115 +1,84 @@
-```blade
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý sân bay</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background: #f5f6fa;
-        }
+@extends('admin.airports.layout')
 
-        .container {
-            max-width: 1100px;
-            margin: auto;
-            background: white;
-            padding: 25px;
-            border-radius: 8px;
-        }
+@section('title', 'Quản lý sân bay')
+@section('topbar-title', 'Quản lý sân bay')
 
-        h2 { margin-top: 0; }
+@section('content')
+    <div class="page-heading">
+        <small>Hệ thống quản trị</small>
+        <h1>Quản lý sân bay</h1>
+        <p>Quản lý thông tin các sân bay trong hệ thống SkyBooking.</p>
+    </div>
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Danh sách sân bay</h2>
 
-        th, td {
-            padding: 12px;
-            border: 1px solid #ddd;
-            text-align: left;
-        }
+            <a href="{{ route('admin.airports.create') }}" class="btn btn-gold">
+                + Thêm sân bay
+            </a>
+        </div>
 
-        th { background: #f0f0f0; }
+        @if (session('success'))
+            <div class="alert alert-success">{{ session('success') }}</div>
+        @endif
 
-        a, button {
-            padding: 7px 12px;
-            text-decoration: none;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
+        @if (session('error'))
+            <div class="alert alert-error">{{ session('error') }}</div>
+        @endif
 
-        .add { background: #198754; color: white; }
-        .edit { background: #0d6efd; color: white; }
-        .delete { background: #dc3545; color: white; }
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mã sân bay</th>
+                        <th>Tên sân bay</th>
+                        <th>Thành phố</th>
+                        <th>Quốc gia</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
 
-        .success { color: green; }
-        .error { color: red; }
+                <tbody>
+                    @forelse ($airports as $airport)
+                        <tr>
+                            <td class="airport-code">{{ $airport->code }}</td>
+                            <td>{{ $airport->name }}</td>
+                            <td>{{ $airport->city }}</td>
+                            <td>{{ $airport->country }}</td>
+                            <td>
+                                <div class="actions">
+                                    <a href="{{ route('admin.airports.edit', $airport) }}"
+                                       class="btn btn-primary">
+                                        Sửa
+                                    </a>
 
-        form { display: inline; }
-    </style>
-</head>
-<body>
-<div class="container">
-    <h2>Quản lý sân bay</h2>
+                                    <form action="{{ route('admin.airports.destroy', $airport) }}"
+                                          method="POST"
+                                          onsubmit="return confirm('Bạn có chắc muốn xóa sân bay này?')">
+                                        @csrf
+                                        @method('DELETE')
 
-    @if (session('success'))
-        <p class="success">{{ session('success') }}</p>
-    @endif
+                                        <button type="submit" class="btn btn-danger">
+                                            Xóa
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" style="text-align:center; color:#77869a;">
+                                Chưa có sân bay nào.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
 
-    @if (session('error'))
-        <p class="error">{{ session('error') }}</p>
-    @endif
-
-    <a href="{{ route('admin.airports.create') }}" class="add">
-        + Thêm sân bay
-    </a>
-
-    <table>
-        <thead>
-            <tr>
-                <th>Mã</th>
-                <th>Tên sân bay</th>
-                <th>Thành phố</th>
-                <th>Quốc gia</th>
-                <th>Thao tác</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse ($airports as $airport)
-                <tr>
-                    <td>{{ $airport->code }}</td>
-                    <td>{{ $airport->name }}</td>
-                    <td>{{ $airport->city }}</td>
-                    <td>{{ $airport->country }}</td>
-                    <td>
-                        <a href="{{ route('admin.airports.edit', $airport) }}"
-                           class="edit">Sửa</a>
-
-                        <form action="{{ route('admin.airports.destroy', $airport) }}"
-                              method="POST"
-                              onsubmit="return confirm('Bạn có chắc muốn xóa sân bay này?')">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="delete">Xóa</button>
-                        </form>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="5">Chưa có sân bay nào.</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
-
-    {{ $airports->links() }}
-</div>
-</body>
-</html>
-```
+        <div class="pagination">
+            {{ $airports->links() }}
+        </div>
+    </div>
+@endsection
