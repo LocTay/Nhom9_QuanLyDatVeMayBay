@@ -12,9 +12,11 @@
 
         body {
             margin: 0;
-            padding: 25px;
-            font-family: Arial, sans-serif;
-            background: #f3f6fb;
+            padding: 30px 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            /* Cập nhật nền gradient sang trọng, đồng bộ toàn hệ thống */
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            min-height: 100vh;
             color: #24324a;
         }
 
@@ -24,48 +26,72 @@
         }
 
         h1 {
-            color: #1455a3;
+            color: #ffffff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        p {
+            color: #e2e8f0;
         }
 
         .flight {
-            background: white;
-            padding: 20px;
-            margin: 16px 0;
-            border-radius: 12px;
-            box-shadow: 0 3px 12px #0000000d;
+            background: #ffffff;
+            padding: 24px;
+            margin: 18px 0;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 20px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .flight:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
         }
 
         .route {
-            font-size: 18px;
+            font-size: 19px;
             font-weight: bold;
+            color: #0f2027;
         }
 
         .muted {
-            color: #6b778c;
-            margin-top: 8px;
+            color: #64748b;
+            margin-top: 6px;
+            font-size: 14px;
         }
 
         .price {
             color: #e65b2a;
-            font-size: 20px;
+            font-size: 22px;
             font-weight: bold;
         }
 
         .empty {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            font-size: 16px;
+            color: #475569;
         }
 
         .back {
             display: inline-block;
-            margin-bottom: 15px;
-            color: #1455a3;
+            margin-bottom: 20px;
+            color: #6fb1fc;
             text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .back:hover {
+            color: #ffffff;
+            text-decoration: underline;
         }
 
         @media (max-width: 600px) {
@@ -110,9 +136,9 @@
             <p>Tìm thấy {{ $chuyenBays->count() }} chuyến bay.</p>
 
             @foreach ($chuyenBays as $chuyenBay)
-                <div class="flight">
+                <div class="flight d-flex justify-content-between align-items-center p-3 mb-3 border rounded bg-white shadow-sm">
                     <div>
-                        <div class="route">
+                        <div class="route fw-bold text-primary mb-1">
                             {{ $chuyenBay->ma_san_bay_di }}
                             ({{ $chuyenBay->thanh_pho_di }})
                             →
@@ -120,27 +146,115 @@
                             ({{ $chuyenBay->thanh_pho_den }})
                         </div>
 
-                        <div class="muted">
+                        <div class="muted text-muted small">
                             Mã chuyến: {{ $chuyenBay->flight_number }}
                         </div>
 
-                        <div class="muted">
+                        <div class="muted text-muted small">
                             Khởi hành:
                             {{ \Carbon\Carbon::parse($chuyenBay->departure_time)->format('H:i d/m/Y') }}
                         </div>
 
-                        <div class="muted">
+                        <div class="muted text-muted small">
                             Hạ cánh:
                             {{ \Carbon\Carbon::parse($chuyenBay->arrival_time)->format('H:i d/m/Y') }}
                         </div>
 
-                        <div class="muted">
+                        <div class="muted text-muted small">
                             Số ghế còn lại: {{ $chuyenBay->available_seats }}
                         </div>
+                        @if(request('loai_chuyen') == 'khu_hoi' || request('trip_type') == 'round_trip')
+                        <div class="mt-2 p-2 rounded" style="background-color: #f1f5f9; font-size: 13px; border-left: 3px solid #0d6efd;">
+                            <i class="bi bi-arrow-left-right text-primary"></i> 
+                            <strong>Khứ hồi hợp lệ:</strong> Chiều về từ <strong>{{ $chuyenBay->thanh_pho_den }}</strong> về <strong>{{ $chuyenBay->thanh_pho_di }}</strong> vào ngày <strong>{{ \Carbon\Carbon::parse(request('ngay_ve'))->format('d/m/Y') }}</strong> đã sẵn sàng.
+                        </div>
+                        @endif
                     </div>
 
-                    <div class="price">
-                        {{ number_format($chuyenBay->price, 0, ',', '.') }} đ
+                    <div class="d-flex flex-column align-items-end text-end" style="min-width: 180px;">
+                        @php
+                            $rawTrip = request('loai_chuyen', request('trip_type', 'mot_chieu'));
+                            $rawClass = request('hang_ve', request('flight_class', 'pho_thong'));
+                            
+                            // Lấy số lượng hành khách từ Controller truyền sang hoặc lấy từ request('hanh_khach')
+                            $passengerCount = $passengerCount ?? request('hanh_khach', 1);
+                            
+                            $isRoundTrip = ($rawTrip == 'round_trip' || $rawTrip == 'khu_hoi');
+                            $multiplier = 1;
+
+                            if ($isRoundTrip) {
+                                switch ($rawClass) {
+                                    case 'pho_thong': $multiplier = 1.95; break;
+                                    case 'pho_thong_dac_biet': $multiplier = 1.90; break;
+                                    case 'thuong_gia': $multiplier = 1.85; break;
+                                    default: $multiplier = 1.90; break;
+                                }
+                            }
+
+                            // Giá vé = Giá cơ bản * Hệ số khứ hồi * Số lượng hành khách
+                            $finalPrice = $chuyenBay->price * $multiplier * $passengerCount;
+
+                            // KIỂM TRA HẠN MỨC GHẾ CHO KHOANG A VÀ B (Tối đa 10 ghế)
+                            $isSoldOut = false;
+                            if ($rawClass === 'thuong_gia' || $rawClass === 'pho_thong_dac_biet') {
+                                $bookedForThisClass = \App\Models\Booking::where('flight_id', $chuyenBay->id)
+                                    ->where('flight_class', $rawClass)
+                                    ->get()
+                                    ->sum(function($bk) {
+                                        return $bk->passenger_count;
+                                    });
+
+                                if (($bookedForThisClass + $passengerCount) > 10) {
+                                    $isSoldOut = true; 
+                                }
+                            }
+                        @endphp
+
+                        <!-- Giá tiền hiển thị chuẩn theo chính sách khứ hồi / một chiều -->
+                        <div class="price mb-1 fw-bold fs-5 text-danger">
+                            {{ number_format($finalPrice, 0, ',', '.') }} đ
+                        </div>
+                        
+                        <!-- Badge hạng vé và loại vé -->
+                        <div class="mb-2" style="font-size: 13px;">
+                            <span class="badge bg-info text-dark">
+                                @php
+                                    $classMap = [
+                                        'pho_thong' => 'Phổ thông',
+                                        'pho_thong_dac_biet' => 'Phổ thông đặc biệt',
+                                        'thuong_gia' => 'Thương gia',
+                                        'hang_nhat' => 'Hạng nhất',
+                                    ];
+                                    $displayClass = $classMap[$rawClass] ?? ucwords(str_replace(['_', '-'], ' ', $rawClass));
+                                @endphp
+                                {{ $displayClass }}
+                            </span>
+                            
+                            <span class="text-muted ms-1">,</span>
+
+                            <span class="badge bg-secondary ms-1">
+                                {{ $isRoundTrip ? 'Khứ hồi' : 'Một chiều' }}
+                            </span>
+                        </div>
+
+                        <!-- Nút Đặt vé hoặc Hiển thị Hết vé khoang nếu vượt quá 10 ghế -->
+                        @if($isSoldOut)
+                            <button class="btn btn-secondary btn-sm mt-1 w-100" disabled style="padding: 8px 18px; border-radius: 6px; font-weight: bold; cursor: not-allowed;">
+                                Hết vé khoang này
+                            </button>
+                        @else
+                            <a href="{{ route('booking.create', [
+                                'flight_id' => $chuyenBay->id, 
+                                'trip_type' => $rawTrip, 
+                                'loai_chuyen' => $rawTrip, 
+                                'flight_class' => $rawClass,
+                                'hang_ve' => $rawClass,
+                                'passenger_count' => $passengerCount,
+                                'ngay_ve' => $ngayVe
+                            ]) }}" class="btn btn-primary btn-sm mt-1 w-100" style="background: #1455a3; color: white; padding: 8px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">
+                                Đặt vé
+                            </a>
+                        @endif
                     </div>
                 </div>
             @endforeach
