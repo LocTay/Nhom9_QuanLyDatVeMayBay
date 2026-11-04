@@ -1,165 +1,137 @@
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chi Tiết Vé - {{ $booking->booking_code }}</title>
+    <title>Chi tiết vé - {{ $booking->booking_code }}</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
     <style>
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #f0f4f8;
+            margin: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
             color: #243b53;
+            background: #f2f6fb;
         }
 
-        /* Navbar */
-        .navbar-custom {
-            background: linear-gradient(135deg, #071b3a, #0750a0);
+        .site-header {
+            background: linear-gradient(120deg, #071b3a, #0750a0);
             padding: 17px 0;
-            box-shadow: 0 3px 15px rgba(0,0,0,0.12);
+            box-shadow: 0 3px 14px rgba(0, 0, 0, .12);
         }
 
-        .navbar-brand {
-            color: white !important;
-            font-size: 23px;
+        .brand {
+            color: #fff;
+            text-decoration: none;
+            font-size: 22px;
             font-weight: 800;
-            letter-spacing: 1px;
+            letter-spacing: .7px;
         }
 
-        .navbar-brand i {
-            color: #55c7ff;
-            margin-right: 10px;
+        .brand i { color: #55c7ff; margin-right: 9px; }
+
+        .page-wrap {
+            width: min(100% - 30px, 1000px);
+            margin: 32px auto 50px;
         }
 
-        /* Main */
-        .main-container {
-            max-width: 1050px;
-            margin: auto;
-            padding: 35px 15px 55px;
-        }
-
-        .back-btn {
-            border-radius: 10px;
-            padding: 10px 18px;
-            font-weight: 600;
+        .back-link {
+            display: inline-block;
             margin-bottom: 22px;
+            border-radius: 9px;
+            font-weight: 600;
         }
 
         .page-title {
-            font-weight: 800;
             color: #123e73;
-            margin-bottom: 7px;
+            font-weight: 800;
+            margin-bottom: 5px;
         }
 
-        .page-subtitle {
-            color: #8192a5;
-            font-size: 14px;
-            margin-bottom: 25px;
+        .page-description {
+            color: #718096;
+            margin-bottom: 24px;
         }
 
-        /* Ticket */
-        .ticket-card {
-            background: white;
-            border-radius: 18px;
+        .ticket-card, .action-card {
+            background: #fff;
+            border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 8px 35px rgba(30,60,90,0.09);
-            margin-bottom: 25px;
+            box-shadow: 0 8px 28px rgba(30, 60, 90, .08);
         }
+
+        .ticket-card { margin-bottom: 22px; }
 
         .ticket-header {
-            background: linear-gradient(135deg, #0879c9, #0750a0);
-            color: white;
-            padding: 25px 30px;
+            color: #fff;
+            background: linear-gradient(120deg, #0879c9, #0750a0);
+            padding: 24px 28px;
         }
 
-        .ticket-header h5 {
-            font-weight: 800;
-            letter-spacing: 0.5px;
-            margin: 0;
+        .booking-label {
+            color: rgba(255,255,255,.78);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
         }
 
         .booking-code {
-            font-size: 25px;
+            font-size: 27px;
             font-weight: 800;
             letter-spacing: 2px;
-            color: #ffffff;
+            margin-top: 4px;
         }
 
         .status-badge {
             display: inline-block;
-            padding: 9px 17px;
+            padding: 8px 14px;
             border-radius: 30px;
             font-size: 13px;
             font-weight: 700;
-            margin-top: 12px;
+            white-space: nowrap;
         }
 
-        .status-paid {
-            background: #d1fae5;
-            color: #047857;
-        }
+        .status-paid { background: #d1fae5; color: #047857; }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-failed { background: #fee2e2; color: #b91c1c; }
+        .status-cancelled { background: #e5e7eb; color: #374151; }
 
-        .status-pending {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .status-failed {
-            background: #fee2e2;
-            color: #b91c1c;
-        }
-
-        .status-cancelled {
-            background: #e5e7eb;
-            color: #374151;
-        }
-
-        .ticket-body {
-            padding: 30px;
-        }
+        .ticket-body { padding: 28px; }
 
         .section-title {
             color: #0750a0;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 800;
-            padding-bottom: 13px;
-            margin-bottom: 22px;
+            padding-bottom: 12px;
+            margin-bottom: 18px;
             border-bottom: 2px solid #eaf1f8;
         }
 
-        .section-title i {
-            margin-right: 9px;
-            color: #1683c7;
-        }
+        .section-title i { margin-right: 8px; color: #1683c7; }
 
-        /* Flight route */
         .flight-route {
             background: #f4f9ff;
             border: 1px solid #e1edf9;
-            border-radius: 15px;
-            padding: 22px 15px;
-            margin-bottom: 25px;
+            border-radius: 13px;
+            padding: 20px 12px;
+            margin-bottom: 26px;
         }
 
         .airport-code {
-            font-size: 32px;
-            font-weight: 800;
             color: #0750a0;
-            letter-spacing: 1px;
+            font-size: 30px;
+            line-height: 1.2;
+            font-weight: 800;
         }
 
-        .airport-name {
-            font-size: 13px;
+        .airport-city {
             color: #70849a;
-            margin-top: 3px;
+            font-size: 13px;
+            margin-top: 5px;
         }
 
         .route-line {
@@ -167,340 +139,269 @@
             align-items: center;
             justify-content: center;
             color: #1683c7;
-            padding: 0 10px;
+            padding: 0 8px;
         }
 
         .route-line .line {
             height: 2px;
             background: #b5d9f5;
             flex: 1;
-            position: relative;
         }
 
-        .route-line i {
-            font-size: 21px;
-            margin: 0 10px;
-            transform: rotate(0deg);
-        }
+        .route-line i { margin: 0 9px; font-size: 19px; }
 
-        /* Information */
         .info-item {
             display: flex;
             align-items: flex-start;
-            margin-bottom: 18px;
-            gap: 12px;
+            gap: 11px;
+            margin-bottom: 17px;
         }
 
         .info-icon {
-            min-width: 38px;
-            height: 38px;
-            background: #eaf5ff;
-            color: #0879c9;
-            border-radius: 10px;
+            width: 36px;
+            height: 36px;
+            flex: 0 0 36px;
             display: flex;
             align-items: center;
             justify-content: center;
+            color: #0879c9;
+            background: #eaf5ff;
+            border-radius: 9px;
         }
+
+        .info-content { min-width: 0; }
 
         .info-content small {
             display: block;
-            color: #8a9bad;
+            color: #8796a8;
             font-size: 12px;
             margin-bottom: 3px;
         }
 
         .info-content strong {
+            display: block;
             color: #243b53;
             font-size: 14px;
-            word-break: break-word;
+            font-weight: 650;
+            overflow-wrap: anywhere;
         }
 
         .flight-number {
-            background: #dff1ff;
+            display: inline-block;
             color: #0750a0;
-            padding: 7px 13px;
-            border-radius: 8px;
+            background: #dff1ff;
+            border-radius: 7px;
+            padding: 5px 10px;
             font-weight: 800;
-            font-size: 15px;
         }
 
-        /* Price */
         .price-box {
-            background: linear-gradient(135deg, #fff7ed, #fff1e6);
+            background: #fff7ed;
             border: 1px solid #ffdfc2;
-            border-radius: 14px;
-            padding: 20px;
-            margin-top: 10px;
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin-top: 8px;
         }
 
-        .price-box small {
+        .price-label {
             color: #9a6b40;
-            font-weight: 600;
+            font-size: 12px;
+            font-weight: 700;
         }
 
         .total-price {
             color: #e65332;
-            font-size: 27px;
+            font-size: 26px;
             font-weight: 800;
-            margin-top: 5px;
+            margin-top: 4px;
         }
 
-        /* Action */
-        .action-card {
-            background: white;
-            border-radius: 18px;
-            padding: 25px 30px;
-            box-shadow: 0 8px 35px rgba(30,60,90,0.07);
-        }
+        .action-card { padding: 24px 28px; }
 
         .action-title {
-            font-weight: 800;
             color: #123e73;
-            margin-bottom: 20px;
+            font-weight: 800;
+            margin-bottom: 18px;
         }
 
-        .btn-action {
-            border-radius: 10px;
-            padding: 11px 20px;
-            font-weight: 700;
-            transition: 0.3s;
+        .action-buttons {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
         }
 
-        .btn-action:hover {
-            transform: translateY(-2px);
-        }
-
-        .payment-area {
+        .payment-form {
             display: flex;
             align-items: center;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 9px;
         }
 
         .payment-label {
+            color: #64748b;
             font-size: 13px;
             font-weight: 700;
-            color: #64748b;
-            margin-right: 5px;
         }
 
-        /* Footer */
-        .footer {
-            text-align: center;
-            padding: 20px;
+        .btn-action {
+            border-radius: 9px;
+            padding: 10px 16px;
+            font-weight: 650;
+        }
+
+        .site-footer {
             background: #071b3a;
             color: #cbdced;
+            text-align: center;
+            padding: 19px 12px;
             font-size: 13px;
         }
 
-        .alert {
-            border-radius: 12px;
+        .alert { border-radius: 10px; }
+
+        @media (min-width: 768px) {
+            .flight-column {
+                border-right: 1px solid #e7edf4;
+                padding-right: 25px;
+            }
+
+            .passenger-column { padding-left: 25px; }
         }
 
-        @media(max-width: 767px) {
-            .ticket-header {
-                padding: 22px 20px;
-            }
-
-            .ticket-body {
-                padding: 22px 18px;
-            }
-
-            .airport-code {
-                font-size: 25px;
-            }
-
-            .airport-name {
-                font-size: 11px;
-            }
-
-            .route-line {
-                padding: 0 5px;
-            }
-
-            .route-line i {
-                font-size: 16px;
-                margin: 0 5px;
-            }
-
-            .ticket-header .text-end {
-                text-align: left !important;
-                margin-top: 15px;
-            }
-
-            .action-card {
-                padding: 22px 18px;
-            }
-
-            .payment-area {
-                margin-top: 20px;
-            }
+        @media (max-width: 767.98px) {
+            .page-wrap { margin-top: 22px; }
+            .ticket-header, .ticket-body { padding: 20px; }
+            .booking-code { font-size: 23px; }
+            .status-wrap { text-align: left !important; margin-top: 15px; }
+            .airport-code { font-size: 24px; }
+            .airport-city { font-size: 11px; }
+            .route-line i { margin: 0 5px; font-size: 16px; }
+            .action-card { padding: 20px; }
+            .action-buttons { align-items: stretch; flex-direction: column; }
+            .action-buttons form { width: 100%; }
+            .payment-form { width: 100%; }
+            .payment-form button { flex: 1; }
         }
     </style>
 </head>
 
 <body>
 
-<!-- Navbar -->
-<nav class="navbar navbar-custom">
-    <div class="container">
-        <a class="navbar-brand" href="{{ route('ticket.lookup.form') }}">
+<header class="site-header">
+    <div class="container d-flex justify-content-between align-items-center">
+        <a class="brand" href="{{ route('ticket.lookup.form') }}">
             <i class="fas fa-plane-departure"></i> SKY TRAVEL
         </a>
-
         <span class="text-white small">
-            <i class="fas fa-ticket-alt me-2"></i>
-            Vé máy bay điện tử
+            <a href="{{ url('/') }}" class="btn btn-primary btn-action">
+                <i class="fas fa-home me-2"></i> Quay lại trang chủ
+            </a>
         </span>
     </div>
-</nav>
+</header>
 
-<!-- Main -->
-<div class="main-container">
+<main class="page-wrap">
 
-    <a href="{{ route('ticket.lookup.form') }}" class="btn btn-outline-primary back-btn">
+    <a href="{{ route('ticket.lookup.form') }}" class="btn btn-outline-primary back-link">
         <i class="fas fa-arrow-left me-2"></i> Quay lại tra cứu
     </a>
 
     <h3 class="page-title">Chi tiết vé máy bay</h3>
-    <p class="page-subtitle">
-        Xem thông tin đặt chỗ, hành khách và trạng thái thanh toán của bạn.
-    </p>
+    <p class="page-description">Thông tin đặt chỗ, chuyến bay và hành khách của bạn.</p>
 
-    <!-- Notifications -->
     @if(session('success'))
         <div class="alert alert-success">
-            <i class="fas fa-check-circle me-2"></i>
-            {{ session('success') }}
+            <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
         </div>
     @endif
 
     @if(session('error'))
         <div class="alert alert-danger">
-            <i class="fas fa-exclamation-circle me-2"></i>
-            {{ session('error') }}
+            <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
         </div>
     @endif
 
     @if(session('info'))
         <div class="alert alert-info">
-            <i class="fas fa-info-circle me-2"></i>
-            {{ session('info') }}
+            <i class="fas fa-info-circle me-2"></i>{{ session('info') }}
         </div>
     @endif
 
-    <!-- Ticket Card -->
-    <div class="ticket-card">
-
-        <!-- Header -->
+    <section class="ticket-card">
         <div class="ticket-header">
             <div class="row align-items-center">
-
                 <div class="col-md-7">
-                    <div class="small mb-2 text-white-50">
-                        BOOKING CODE / MÃ ĐẶT CHỖ
-                    </div>
-
-                    <div class="booking-code">
-                        {{ $booking->booking_code }}
-                    </div>
-
-                    <div class="mt-2 small text-white-50">
-                        <i class="fas fa-plane me-1"></i>
-                        SKY TRAVEL E-TICKET
+                    <div class="booking-label">BOOKING CODE / MÃ ĐẶT CHỖ</div>
+                    <div class="booking-code">{{ $booking->booking_code }}</div>
+                    <div class="small text-white-50 mt-2">
+                        <i class="fas fa-plane me-1"></i> SKY TRAVEL E-TICKET
                     </div>
                 </div>
 
-                <div class="col-md-5 text-end">
-
+                <div class="col-md-5 text-md-end status-wrap">
                     @if($booking->status === 'paid')
                         <span class="status-badge status-paid">
-                            <i class="fas fa-check-circle me-1"></i>
-                            Đã thanh toán
+                            <i class="fas fa-check-circle me-1"></i> Đã thanh toán
                         </span>
-
                     @elseif($booking->status === 'pending')
                         <span class="status-badge status-pending">
-                            <i class="fas fa-clock me-1"></i>
-                            Chờ thanh toán
+                            <i class="fas fa-clock me-1"></i> Chờ thanh toán
                         </span>
-
                     @elseif($booking->status === 'failed')
                         <span class="status-badge status-failed">
-                            <i class="fas fa-times-circle me-1"></i>
-                            Thanh toán thất bại
+                            <i class="fas fa-times-circle me-1"></i> Thanh toán thất bại
                         </span>
-
                     @elseif($booking->status === 'cancelled')
                         <span class="status-badge status-cancelled">
-                            <i class="fas fa-ban me-1"></i>
-                            Đã hủy vé
+                            <i class="fas fa-ban me-1"></i> Đã hủy vé
                         </span>
+                    @else
+                        <span class="status-badge status-pending">Chưa xác định trạng thái</span>
                     @endif
-
                 </div>
             </div>
         </div>
 
-        <!-- Body -->
         <div class="ticket-body">
-
-            <!-- Flight Information -->
             <h6 class="section-title">
-                <i class="fas fa-plane"></i>
-                THÔNG TIN CHUYẾN BAY
+                <i class="fas fa-plane"></i> THÔNG TIN CHUYẾN BAY
             </h6>
 
             <div class="flight-route">
-
                 <div class="row align-items-center text-center">
-
                     <div class="col-4">
-                        <div class="airport-code">
-                            {{ $booking->flight->departureAirport->code }}
-                        </div>
-
-                        <div class="airport-name">
-                            {{ $booking->flight->departureAirport->city }}
-                        </div>
+                        <div class="airport-code">{{ $booking->flight->departureAirport->code }}</div>
+                        <div class="airport-city">{{ $booking->flight->departureAirport->city }}</div>
                     </div>
 
                     <div class="col-4">
                         <div class="route-line">
-                            <div class="line"></div>
+                            <span class="line"></span>
                             <i class="fas fa-plane"></i>
-                            <div class="line"></div>
+                            <span class="line"></span>
                         </div>
-
                         <div class="small text-muted mt-2">
                             {{ $booking->flight->flight_number }}
                         </div>
                     </div>
 
                     <div class="col-4">
-                        <div class="airport-code">
-                            {{ $booking->flight->arrivalAirport->code }}
-                        </div>
-
-                        <div class="airport-name">
-                            {{ $booking->flight->arrivalAirport->city }}
-                        </div>
+                        <div class="airport-code">{{ $booking->flight->arrivalAirport->code }}</div>
+                        <div class="airport-city">{{ $booking->flight->arrivalAirport->city }}</div>
                     </div>
-
                 </div>
-
             </div>
 
             <div class="row g-4">
-
-                <!-- Flight Details -->
-                <div class="col-md-6 border-md-end">
+                <div class="col-md-6 flight-column">
+                    <h6 class="section-title">
+                        <i class="fas fa-plane-departure"></i> CHI TIẾT HÀNH TRÌNH
+                    </h6>
 
                     <div class="info-item">
-                        <div class="info-icon">
-                            <i class="fas fa-plane-departure"></i>
-                        </div>
-
+                        <div class="info-icon"><i class="fas fa-map-marker-alt"></i></div>
                         <div class="info-content">
                             <small>Điểm khởi hành</small>
                             <strong>
@@ -512,10 +413,7 @@
                     </div>
 
                     <div class="info-item">
-                        <div class="info-icon">
-                            <i class="fas fa-plane-arrival"></i>
-                        </div>
-
+                        <div class="info-icon"><i class="fas fa-map-pin"></i></div>
                         <div class="info-content">
                             <small>Điểm đến</small>
                             <strong>
@@ -527,10 +425,7 @@
                     </div>
 
                     <div class="info-item">
-                        <div class="info-icon">
-                            <i class="fas fa-clock"></i>
-                        </div>
-
+                        <div class="info-icon"><i class="fas fa-clock"></i></div>
                         <div class="info-content">
                             <small>Giờ cất cánh</small>
                             <strong>
@@ -540,10 +435,7 @@
                     </div>
 
                     <div class="info-item">
-                        <div class="info-icon">
-                            <i class="fas fa-clock"></i>
-                        </div>
-
+                        <div class="info-icon"><i class="fas fa-clock"></i></div>
                         <div class="info-content">
                             <small>Giờ hạ cánh</small>
                             <strong>
@@ -553,35 +445,21 @@
                     </div>
 
                     <div class="info-item">
-                        <div class="info-icon">
-                            <i class="fas fa-fingerprint"></i>
-                        </div>
-
+                        <div class="info-icon"><i class="fas fa-fingerprint"></i></div>
                         <div class="info-content">
                             <small>Số hiệu chuyến bay</small>
-                            <strong>
-                                <span class="flight-number">
-                                    {{ $booking->flight->flight_number }}
-                                </span>
-                            </strong>
+                            <strong><span class="flight-number">{{ $booking->flight->flight_number }}</span></strong>
                         </div>
                     </div>
-
                 </div>
 
-                <!-- Passenger Details -->
-                <div class="col-md-6">
-
+                <div class="col-md-6 passenger-column">
                     <h6 class="section-title">
-                        <i class="fas fa-user"></i>
-                        THÔNG TIN HÀNH KHÁCH
+                        <i class="fas fa-user"></i> THÔNG TIN HÀNH KHÁCH
                     </h6>
 
                     <div class="info-item">
-                        <div class="info-icon">
-                            <i class="fas fa-user-circle"></i>
-                        </div>
-
+                        <div class="info-icon"><i class="fas fa-user-circle"></i></div>
                         <div class="info-content">
                             <small>Họ và tên</small>
                             <strong>{{ $booking->passenger_name }}</strong>
@@ -589,10 +467,7 @@
                     </div>
 
                     <div class="info-item">
-                        <div class="info-icon">
-                            <i class="fas fa-envelope"></i>
-                        </div>
-
+                        <div class="info-icon"><i class="fas fa-envelope"></i></div>
                         <div class="info-content">
                             <small>Email</small>
                             <strong>{{ $booking->passenger_email }}</strong>
@@ -600,10 +475,7 @@
                     </div>
 
                     <div class="info-item">
-                        <div class="info-icon">
-                            <i class="fas fa-phone"></i>
-                        </div>
-
+                        <div class="info-icon"><i class="fas fa-phone"></i></div>
                         <div class="info-content">
                             <small>Số điện thoại</small>
                             <strong>{{ $booking->passenger_phone }}</strong>
@@ -611,10 +483,7 @@
                     </div>
 
                     <div class="info-item">
-                        <div class="info-icon">
-                            <i class="fas fa-chair"></i>
-                        </div>
-
+                        <div class="info-icon"><i class="fas fa-chair"></i></div>
                         <div class="info-content">
                             <small>Số lượng ghế</small>
                             <strong>{{ $booking->number_of_seats }} ghế</strong>
@@ -623,10 +492,7 @@
 
                     @if($booking->payment_time)
                         <div class="info-item">
-                            <div class="info-icon">
-                                <i class="fas fa-calendar-check"></i>
-                            </div>
-
+                            <div class="info-icon"><i class="fas fa-calendar-check"></i></div>
                             <div class="info-content">
                                 <small>Thời gian thanh toán</small>
                                 <strong>
@@ -635,133 +501,79 @@
                             </div>
                         </div>
                     @endif
-
                 </div>
             </div>
 
-            <!-- Total Price -->
             <div class="price-box">
-                <div class="d-flex justify-content-between align-items-center flex-wrap">
-
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <div>
-                        <small>
-                            <i class="fas fa-receipt me-1"></i>
-                            TỔNG THANH TOÁN
-                        </small>
-
-                        <div class="total-price">
-                            {{ number_format($booking->total_price) }} VNĐ
+                        <div class="price-label">
+                            <i class="fas fa-receipt me-1"></i> TỔNG THANH TOÁN
                         </div>
+                        <div class="total-price">{{ number_format($booking->total_price) }} VNĐ</div>
                     </div>
-
-                    <div class="text-end mt-2">
-                        <i class="fas fa-shield-alt fa-2x text-warning"></i>
-                        <div class="small text-muted mt-1">
-                            SKY TRAVEL
-                        </div>
+                    <div class="text-end text-warning">
+                        <i class="fas fa-shield-alt fa-2x"></i>
+                        <div class="small text-muted mt-1">SKY TRAVEL</div>
                     </div>
-
                 </div>
             </div>
-
         </div>
-    </div>
+    </section>
 
-    <!-- Action Card -->
-    <div class="action-card">
-
+    <section class="action-card">
         <h6 class="action-title">
-            <i class="fas fa-cogs text-primary me-2"></i>
-            THAO TÁC VÉ MÁY BAY
+            <i class="fas fa-cogs text-primary me-2"></i> THAO TÁC VÉ MÁY BAY
         </h6>
 
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-
-            <!-- Cancel Ticket -->
+        <div class="action-buttons">
             @if($booking->status !== 'cancelled')
-
                 <form
                     action="{{ route('ticket.cancel', $booking->booking_code) }}"
                     method="POST"
                     onsubmit="return confirm('Bạn có chắc chắn muốn hủy vé máy bay này?')"
                 >
                     @csrf
-
                     <button type="submit" class="btn btn-outline-danger btn-action">
-                        <i class="fas fa-ban me-2"></i>
-                        Hủy vé máy bay
+                        <i class="fas fa-ban me-2"></i> Hủy vé máy bay
                     </button>
                 </form>
-
             @else
-
                 <div class="text-muted small">
-                    <i class="fas fa-info-circle me-1"></i>
-                    Vé này đã được hủy.
+                    <i class="fas fa-info-circle me-1"></i> Vé này đã được hủy.
                 </div>
-
             @endif
 
-            <!-- Payment Simulation -->
             @if(in_array($booking->status, ['pending', 'failed']))
-
                 <form
                     action="{{ route('ticket.payment', $booking->booking_code) }}"
                     method="POST"
-                    class="payment-area"
+                    class="payment-form"
                 >
                     @csrf
+                    <span class="payment-label">Mô phỏng thanh toán:</span>
 
-                    <span class="payment-label">
-                        Mô phỏng thanh toán:
-                    </span>
-
-                    <button
-                        type="submit"
-                        name="payment_status"
-                        value="success"
-                        class="btn btn-success btn-action"
-                    >
-                        <i class="fas fa-check me-1"></i>
-                        Thành công
+                    <button type="submit" name="payment_status" value="success" class="btn btn-success btn-action">
+                        <i class="fas fa-check me-1"></i> Thành công
                     </button>
 
-                    <button
-                        type="submit"
-                        name="payment_status"
-                        value="failed"
-                        class="btn btn-danger btn-action"
-                    >
-                        <i class="fas fa-times me-1"></i>
-                        Thất bại
+                    <button type="submit" name="payment_status" value="failed" class="btn btn-danger btn-action">
+                        <i class="fas fa-times me-1"></i> Thất bại
                     </button>
-
                 </form>
-
-            @endif
-
-            @if($booking->status === 'paid')
+            @elseif($booking->status === 'paid')
                 <span class="text-success fw-bold">
-                    <i class="fas fa-check-circle me-2"></i>
-                    Vé đã được thanh toán thành công!
+                    <i class="fas fa-check-circle me-2"></i> Vé đã được thanh toán thành công!
                 </span>
             @endif
-
         </div>
+    </section>
+</main>
 
-    </div>
-
-</div>
-
-<!-- Footer -->
-<footer class="footer">
-    <div>
-        © {{ date('Y') }} SKY TRAVEL - Hệ thống quản lý và tra cứu vé máy bay
-    </div>
-
+<footer class="site-footer">
+    <div>© {{ date('Y') }} SKY TRAVEL - Hệ thống quản lý và tra cứu vé máy bay</div>
     <div class="mt-2">
-        <i class="fas fa-plane me-1"></i>
-        Chúc bạn có một chuyến bay an toàn và vui vẻ!
+        <i class="fas fa-plane me-1"></i> Chúc bạn có một chuyến bay an toàn và vui vẻ!
     </div>
 </footer>
 
