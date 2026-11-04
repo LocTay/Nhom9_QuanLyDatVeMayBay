@@ -237,15 +237,30 @@
     <header>
         <div class="logo">✈ SkyBooking</div>
 
-        <nav>
-            <a href="/">Trang chủ</a>
-            <a href="#datve">Tìm chuyến bay</a>
-            <!-- CHUYỂN TRỰC TIẾP TỚI TRANG LOOKUP -->
-            <a href="{{ route('ticket.lookup.form') }}">Tra cứu vé</a>
-            <a href="#tienich">Tiện ích</a>
-            <a href="#footer">Liên hệ</a>
-            <a href="#" class="login">Đăng nhập</a>
-        </nav>
+
+<nav>
+    <a href="/">Trang chủ</a>
+    <a href="#datve">Tìm chuyến bay</a>
+    <a href="#tienich">Tiện ích</a>
+    <!-- CHUYỂN TRỰC TIẾP TỚI FORM TRA CỨU -->
+    <a href="{{ route('ticket.lookup.form') }}">Tra cứu vé</a>
+    <a href="#footer">Liên hệ</a>
+
+    @guest
+        <a href="{{ route('login') }}" class="login">Đăng nhập</a>
+        <a href="{{ route('register') }}">Đăng ký</a>
+    @else
+        <span>Xin chào, {{ Auth::user()->name }}</span>
+
+        <form action="{{ route('logout') }}" method="POST" style="display: inline;">
+            @csrf
+            <button type="submit" class="login" style="border: none; cursor: pointer;">
+                Đăng xuất
+            </button>
+        </form>
+    @endguest
+</nav>
+
     </header>
 
     <section class="hero">
@@ -260,7 +275,7 @@
     <section class="booking" id="datve">
         <h2>Tìm chuyến bay</h2>
 
-        <form action="{{ route('flights.search') }}" method="GET">
+        <form id="formTimChuyenBay" action="{{ route('flights.search') }}" method="GET">
             <div class="trip-type">
                 <label>
                     <input type="radio" name="loai_chuyen" value="mot_chieu" checked>
@@ -413,7 +428,26 @@
 
         capNhatNgayVe();
 
-        document.querySelector('#datve form').addEventListener('submit', function (e) {
+
+document.querySelector('#formTimChuyenBay').addEventListener('submit', function (e) {
+    const diemDi = document.getElementById('diem_di').value;
+    const diemDen = document.getElementById('diem_den').value;
+
+    if (diemDi === diemDen) {
+        e.preventDefault();
+        alert('Điểm đi và điểm đến không được giống nhau!');
+        return;
+    }
+
+    const ngayDi = document.getElementById('ngay_di');
+    const ngayVe = document.getElementById('ngay_ve');
+
+    if (ngayVe && ngayVe.required && ngayVe.value < ngayDi.value) {
+        e.preventDefault();
+        alert('Ngày về phải bằng hoặc sau ngày khởi hành!');
+    }
+});
+
             const diemDi = document.getElementById('diem_di').value;
             const diemDen = document.getElementById('diem_den').value;
 
