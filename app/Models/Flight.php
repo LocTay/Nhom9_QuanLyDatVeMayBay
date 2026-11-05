@@ -20,18 +20,15 @@ class Flight extends Model
         'status',
     ];
 
+    // Quan hệ với sân bay đi (Departure Airport)
     public function departureAirport()
     {
         return $this->belongsTo(Airport::class, 'departure_airport_id');
     }
 
+    // Quan hệ với sân bay đến (Arrival Airport)
     public function arrivalAirport()
     {
         return $this->belongsTo(Airport::class, 'arrival_airport_id');
-    }
-
-    public function bookings()
-    {
-        return $this->hasMany(Booking::class);
     }
 }

@@ -432,6 +432,14 @@
 
         .trip-type {
             display: flex;
+<<<<<<< HEAD
+            gap: 24px;
+            margin-bottom: 25px;
+        }
+
+        .trip-type label {
+            cursor: pointer;
+=======
             align-items: center;
             flex-wrap: wrap;
             gap: 10px;
@@ -459,6 +467,7 @@
 
         .trip-option input {
             accent-color: var(--navy);
+>>>>>>> 6ce392736ef507a26f5ead9550d5984dea71a065
         }
 
         .form-grid {

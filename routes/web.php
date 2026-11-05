@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 
 use App\Http\Controllers\FlightController;
+use App\Http\Controllers\BookingController; // Thêm dòng gọi Controller đặt vé
+
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
@@ -18,7 +20,19 @@ Route::get('/', function () {
     return view('home', compact('sanBays'));
 });
 
-// Tim chuyen bay
+// Tìm kiếm chuyến bay
+Route::get('/flights', [FlightController::class, 'index'])
+    ->name('flights.search');
+
+// BỔ SUNG CÁC ROUTE ĐẶT VÉ CỦA THÀNH VIÊN 2
+Route::get('/booking/create/{flight_id}', [BookingController::class, 'create'])
+    ->name('booking.create');
+
+Route::post('/booking/store', [BookingController::class, 'store'])
+    ->name('booking.store');
+
+Route::get('/booking/success/{id}', [BookingController::class, 'success'])
+    ->name('booking.success');
 Route::get('/flights', [FlightController::class, 'index'])
     ->name('flights.search');
 
@@ -83,7 +97,6 @@ Route::middleware('auth')->group(function () {
     Route::put('/tai-khoan', [ProfileController::class, 'update'])
         ->name('profile.update');
 });
-
 // Quan ly san bay - chi Admin
 Route::middleware(['role:admin'])
     ->prefix('admin')
