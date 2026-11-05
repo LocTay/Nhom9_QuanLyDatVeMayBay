@@ -21,6 +21,7 @@ class FlightController extends Controller
         $passengerCount = $request->input('hanh_khach', 1);
 
         $chuyenBays = collect();
+        $chuyenBayVes = collect(); // Thêm biến chứa danh sách chuyến bay chiều về
 
         if ($diemDi && $diemDen && $ngayDi) {
             // Truy vấn danh sách chuyến bay chiều đi
@@ -41,7 +42,7 @@ class FlightController extends Controller
                 ->where('san_bay_den.code', $diemDen)
                 ->whereDate('flights.departure_time', $ngayDi)
                 ->where('flights.status', 'scheduled')
-                ->where('flights.available_seats', '>=', $passengerCount) // Đảm bảo chuyến bay đủ số ghế trống cho đoàn khách
+                ->where('flights.available_seats', '>=', $passengerCount)
                 ->select(
                     'flights.*',
                     'san_bay_di.city as thanh_pho_di',
@@ -53,40 +54,49 @@ class FlightController extends Controller
 
             $chuyenBays = $query->get();
 
-            // RÀNG BUỘC VÉ KHỨ HỒI: Kiểm tra xem chiều ngược lại có chuyến bay vào ngày về ($ngayVe) hay không
+            // RÀNG BUỘC VÉ KHỨ HỒI
             $isRoundTrip = ($loaiChuyen === 'khu_hoi' || $loaiChuyen === 'round_trip');
 
             if ($isRoundTrip) {
                 if (empty($ngayVe)) {
-                    // Nếu là khứ hồi mà chưa chọn ngày về -> Không hiển thị chuyến nào
                     $chuyenBays = collect();
                 } else {
-                    // Lọc lại danh sách: Chỉ giữ các chuyến đi mà chiều về (từ diem_den về diem_di vào ngày ngayVe) thực sự tồn tại và đủ chỗ
-                    $chuyenBays = $chuyenBays->filter(function ($flight) use ($diemDi, $diemDen, $ngayVe, $passengerCount) {
-                        $hasReturnFlight = DB::table('flights')
-                            ->join('airports as san_bay_di', 'flights.departure_airport_id', '=', 'san_bay_di.id')
-                            ->join('airports as san_bay_den', 'flights.arrival_airport_id', '=', 'san_bay_den.id')
-                            ->where('san_bay_di.code', $diemDen) // Đảo chiều: xuất phát từ điểm đến cũ
-                            ->where('san_bay_den.code', $diemDi) // Về lại điểm đi cũ
-                            ->whereDate('flights.departure_time', $ngayVe)
-                            ->where('flights.status', 'scheduled')
-                            ->where('flights.available_seats', '>=', $passengerCount)
-                            ->exists();
+                    // 1. LẤY DANH SÁCH CÁC CHUYẾN BAY CHIỀU VỀ THỰC TẾ
+                    $chuyenBayVes = DB::table('flights')
+                        ->join('airports as san_bay_di', 'flights.departure_airport_id', '=', 'san_bay_di.id')
+                        ->join('airports as san_bay_den', 'flights.arrival_airport_id', '=', 'san_bay_den.id')
+                        ->where('san_bay_di.code', $diemDen) // Đảo chiều: xuất phát từ điểm đến cũ
+                        ->where('san_bay_den.code', $diemDi) // Về lại điểm đi cũ
+                        ->whereDate('flights.departure_time', $ngayVe)
+                        ->where('flights.status', 'scheduled')
+                        ->where('flights.available_seats', '>=', $passengerCount)
+                        ->select(
+                            'flights.*',
+                            'san_bay_di.city as thanh_pho_di',
+                            'san_bay_di.code as ma_san_bay_di',
+                            'san_bay_den.city as thanh_pho_den',
+                            'san_bay_den.code as ma_san_bay_den'
+                        )
+                        ->orderBy('flights.departure_time')
+                        ->get();
 
-                        return $hasReturnFlight; // Trả về true nếu chiều về có thật, ngược lại loại bỏ chuyến đi này
-                    });
+                    // 2. Chỉ giữ lại chuyến đi nếu ngày về thực sự có ít nhất 1 chuyến bay chiều về phù hợp
+                    if ($chuyenBayVes->isEmpty()) {
+                        $chuyenBays = collect();
+                    }
                 }
             }
         }
 
         return view('flights', compact(
             'chuyenBays',
+            'chuyenBayVes', // Truyền thêm biến này sang view để hiển thị
             'diemDi',
             'diemDen',
             'ngayDi',
             'ngayVe',
             'loaiChuyen',
-            'passengerCount' // Truyền biến số lượng hành khách sang view
+            'passengerCount'
         ));
     }
 }

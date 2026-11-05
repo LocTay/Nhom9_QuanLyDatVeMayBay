@@ -11,12 +11,14 @@ class Booking extends Model
 
     protected $fillable = [
         'pnr_code',
+        'booking_code',
         'flight_id',
         'passenger_name',
         'passenger_email',
         'passenger_phone',
         'passenger_gender',
         'passenger_count',
+        'number_of_seats',
         'passengers_data',
         'total_price',
         'status',
