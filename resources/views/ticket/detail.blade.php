@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chi tiết vé - {{ $booking->booking_code }}</title>
+    <title>Chi tiết vé - {{ $booking->pnr_code }}</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
@@ -334,7 +334,7 @@
             <div class="row align-items-center">
                 <div class="col-md-7">
                     <div class="booking-label">BOOKING CODE / MÃ ĐẶT CHỖ</div>
-                    <div class="booking-code">{{ $booking->booking_code }}</div>
+                    <div class="booking-code">{{ $booking->pnr_code }}</div>
                     <div class="small text-white-50 mt-2">
                         <i class="fas fa-plane me-1"></i> SKY TRAVEL E-TICKET
                     </div>
@@ -486,7 +486,7 @@
                         <div class="info-icon"><i class="fas fa-chair"></i></div>
                         <div class="info-content">
                             <small>Số lượng ghế</small>
-                            <strong>{{ $booking->number_of_seats }} ghế</strong>
+                            <strong>{{ $booking->passenger_count }} ghế</strong>
                         </div>
                     </div>
 
@@ -529,7 +529,7 @@
         <div class="action-buttons">
             @if($booking->status !== 'cancelled')
                 <form
-                    action="{{ route('ticket.cancel', $booking->booking_code) }}"
+                    action="{{ route('ticket.cancel', $booking->pnr_code) }}"
                     method="POST"
                     onsubmit="return confirm('Bạn có chắc chắn muốn hủy vé máy bay này?')"
                 >
@@ -546,7 +546,7 @@
 
             @if(in_array($booking->status, ['pending', 'failed']))
                 <form
-                    action="{{ route('ticket.payment', $booking->booking_code) }}"
+                    action="{{ route('ticket.payment', $booking->pnr_code) }}"
                     method="POST"
                     class="payment-form"
                 >

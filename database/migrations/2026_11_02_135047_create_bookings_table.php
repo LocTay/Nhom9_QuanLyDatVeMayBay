@@ -2,34 +2,52 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
-{
-    Schema::create('bookings', function (Blueprint $table) {
-        $table->id();
-        $table->string('pnr_code')->unique(); // Mã đặt chỗ (VD: HD72KS)
-        $table->foreignId('flight_id')->constrained('flights')->onDelete('cascade');
-        $table->string('passenger_name');
-        $table->string('passenger_email');
-        $table->string('passenger_phone');
-        $table->integer('passenger_count')->default(1);
-        $table->decimal('total_price', 15, 2);
-        $table->string('status')->default('pending'); // pending, paid, cancelled
-        $table->timestamps();
-    });
-}
+    {
+        // Bảng bookings đã được tạo bởi migration trước đó.
+        // Bổ sung các cột của cấu trúc đặt vé mới.
+        if (!Schema::hasColumn('bookings', 'pnr_code')) {
+            Schema::table('bookings', function (Blueprint $table) {
+                $table->string('pnr_code')->nullable()->unique();
+            });
+        }
 
-    /**
-     * Reverse the migrations.
-     */
+        if (!Schema::hasColumn('bookings', 'passenger_count')) {
+            Schema::table('bookings', function (Blueprint $table) {
+                $table->unsignedInteger('passenger_count')->default(1);
+            });
+        }
+
+        // Chuyển dữ liệu cũ nếu đã tồn tại.
+        if (
+            Schema::hasColumn('bookings', 'booking_code') &&
+            Schema::hasColumn('bookings', 'number_of_seats')
+        ) {
+            DB::table('bookings')
+                ->whereNull('pnr_code')
+                ->orderBy('id')
+                ->chunkById(100, function ($bookings) {
+                    foreach ($bookings as $booking) {
+                        DB::table('bookings')
+                            ->where('id', $booking->id)
+                            ->update([
+                                'pnr_code' => $booking->booking_code,
+                                'passenger_count' => $booking->number_of_seats,
+                            ]);
+                    }
+                });
+        }
+    }
+
     public function down(): void
     {
-        Schema::dropIfExists('bookings');
+        Schema::table('bookings', function (Blueprint $table) {
+            $table->dropColumn(['pnr_code', 'passenger_count']);
+        });
     }
 };

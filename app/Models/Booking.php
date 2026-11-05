@@ -20,12 +20,27 @@ class Booking extends Model
         'passengers_data',
         'total_price',
         'status',
-        'trip_type',     
-        'flight_class',  
+        'trip_type',
+        'flight_class',
     ];
     protected $casts = [
-    'passengers_data' => 'array', // Ép kiểu tự động mã hóa/giải mã JSON sang mảng PHP
+        'passengers_data' => 'array', // Ép kiểu tự động mã hóa/giải mã JSON sang mảng PHP
     ];
+
+
+    protected static function booted(): void
+    {
+        static::creating(function (Booking $booking) {
+            if ($booking->pnr_code && !$booking->booking_code) {
+                $booking->booking_code = $booking->pnr_code;
+            }
+
+            if ($booking->passenger_count !== null) {
+                $booking->number_of_seats = $booking->passenger_count;
+            }
+        });
+    }
+
 
     public function flight()
     {
