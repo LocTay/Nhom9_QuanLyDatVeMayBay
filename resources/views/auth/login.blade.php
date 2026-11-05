@@ -1,10 +1,10 @@
-
+﻿
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng nhập</title>
+    <title>ÄÄƒng nháº­p</title>
 
     <style>
         * {
@@ -71,7 +71,7 @@
 </head>
 <body>
     <div class="container">
-        <h2>Đăng nhập</h2>
+        <h2>ÄÄƒng nháº­p</h2>
 
         @if ($errors->any())
             <div class="error">
@@ -92,20 +92,20 @@
             <input type="email" name="email"
                    value="{{ old('email') }}" required>
 
-            <label>Mật khẩu</label>
+            <label>Máº­t kháº©u</label>
             <input type="password" name="password" required>
 
-            <button type="submit">Đăng nhập</button>
+            <button type="submit">ÄÄƒng nháº­p</button>
         </form>
 
-        
+
 <div class="link">
-    <a href="{{ route('password.request') }}">Quên mật khẩu?</a>
+    <a href="{{ route('password.request') }}">QuÃªn máº­t kháº©u?</a>
 </div>
 
 <div class="link">
-    Chưa có tài khoản?
-    <a href="{{ route('register') }}">Đăng ký ngay</a>
+    ChÆ°a cÃ³ tÃ i khoáº£n?
+    <a href="{{ route('register') }}">ÄÄƒng kÃ½ ngay</a>
 </div>
 
     </div>
