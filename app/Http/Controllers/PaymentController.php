@@ -92,9 +92,10 @@ class PaymentController extends Controller
         $booking->status = 'cancelled';
         $booking->save();
 
-        // Hoàn trả số ghế trống cho chuyến bay
+        // Hoàn trả số ghế trống cho chuyến bay (sử dụng passenger_count thay vì number_of_seats tùy thuộc cột DB của Luân)
         if ($booking->flight) {
-            $booking->flight->increment('available_seats', $booking->number_of_seats);
+            $seatsToReturn = $booking->passenger_count ?? $booking->number_of_seats ?? 1;
+            $booking->flight->increment('available_seats', $seatsToReturn);
         }
 
         return redirect()->back()->with('success', 'Hủy vé thành công! Ghế trống đã được cập nhật lại cho chuyến bay.');

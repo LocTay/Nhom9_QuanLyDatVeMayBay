@@ -6,14 +6,23 @@ use Illuminate\Http\Request;
 use App\Models\Flight;
 use App\Models\Booking;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class BookingController extends Controller
 {
+
     public function create(Request $request, $id)
     {
         $flight = Flight::findOrFail($id);
         
-        // Nhận thêm thông tin loại vé và hạng vé từ URL
+        // 1. Kiểm tra ràng buộc: Chặn ngay nếu còn dưới 3 tiếng nữa là bay hoặc đã bay
+        $departureTime = Carbon::parse($flight->departure_time);
+        if (Carbon::now()->addHours(3)->greaterThan($departureTime)) {
+            return redirect()->route('flights.search') 
+                ->with('error', 'Chuyến bay này đã khởi hành hoặc còn dưới 3 tiếng nữa là khởi hành, không thể đặt vé.');
+        }
+
+        // 2. Nhận thêm thông tin loại vé và hạng vé từ URL
         $tripType = $request->query('trip_type', 'one_way');
         $flightClass = $request->query('flight_class', 'Phổ thông');
         $ngayVe = $request->query('ngay_ve');
@@ -47,7 +56,7 @@ class BookingController extends Controller
 
         // Khoang Phổ thông (C) linh động theo tổng số ghế trống thực tế của chuyến bay
         $totalAvailableFlightSeats = $flight->available_seats;
-        $maxC = max(0, $totalAvailableFlightSeats - ($maxA - $bookedCounts['A']) - ($maxB - $bookedCounts['B']));
+        $maxC = max(0, $totalAvailableFlightSeats - $maxA - $maxB);
 
         $maxSeats = [
             'A' => $maxA,
@@ -80,7 +89,14 @@ class BookingController extends Controller
 
         // Lấy thông tin chuyến bay và kiểm tra tổng số ghế trống còn lại của chuyến
         $flight = Flight::findOrFail($request->flight_id);
+        // Kiểm tra: Thời gian hiện tại cộng thêm 3 tiếng phải nhỏ hơn thời gian khởi hành của chuyến bay
+        $departureTime = Carbon::parse($flight->departure_time);
 
+        if (Carbon::now()->addHours(3)->greaterThan($departureTime)) {
+            return redirect()->back()
+                ->withErrors(['flight_id' => 'Chuyến bay này đã khởi hành hoặc còn dưới 3 tiếng nữa là khởi hành, không thể đặt vé.'])
+                ->withInput();
+        }
         if ($flight->available_seats < $request->passenger_count) {
             return back()->withErrors(['passenger_count' => 'Chuyến bay không còn đủ số ghế trống cho số lượng hành khách này.'])->withInput();
         }
@@ -166,29 +182,45 @@ class BookingController extends Controller
         // Tạo mã PNR ngẫu nhiên
         $pnrCode = strtoupper(Str::random(6));
         
-        // Tính hệ số nhân theo chính sách giá vé khứ hồi / một chiều
-        $multiplier = 1; 
+        // 1. Hệ số hạng vé (Class Multiplier)
+        $classMultiplier = 1.0;
+        switch ($flightClass) {
+            case 'pho_thong': 
+                $classMultiplier = 1.0; 
+                break;
+            case 'pho_thong_dac_biet': 
+                $classMultiplier = 1.4; 
+                break;
+            case 'thuong_gia': 
+                $classMultiplier = 2.2; 
+                break;
+            default: 
+                $classMultiplier = 1.0; 
+                break;
+        }
 
+        // 2. Tính hệ số khứ hồi hoặc giữ nguyên nếu là vé một chiều
+        $tripFactor = 1.0;
         if ($isRoundTrip) {
             switch ($flightClass) {
-                case 'pho_thong':
-                    $multiplier = 1.95; 
+                case 'pho_thong': 
+                    $tripFactor = 1.95; 
                     break;
-                case 'pho_thong_dac_biet':
-                    $multiplier = 1.90; 
+                case 'pho_thong_dac_biet': 
+                    $tripFactor = 1.90; 
                     break;
-                case 'thuong_gia':
-                    $multiplier = 1.85; 
+                case 'thuong_gia': 
+                    $tripFactor = 1.85; 
                     break;
-                default:
-                    $multiplier = 1.90; 
+                default: 
+                    $tripFactor = 1.90; 
                     break;
             }
         }
 
-        // Tính tổng tiền = Giá vé cơ bản * Số lượng hành khách * Hệ số hạng vé
-        $totalPrice = $flight->price * $request->passenger_count * $multiplier;
-
+        // 3. Tính tổng tiền = Giá cơ bản * Hệ số hạng vé * Hệ số khứ hồi * Số lượng hành khách
+        $passengerCount = $request->passenger_count ?? 1;
+        $totalPrice = $flight->price * $classMultiplier * $tripFactor * $passengerCount;
         // Trừ số lượng ghế tồn của chuyến bay trong database
         $flight->decrement('available_seats', $request->passenger_count);
 
@@ -200,9 +232,10 @@ class BookingController extends Controller
             'passenger_phone' => $request->passenger_phone,
             'passenger_gender' => $request->passenger_gender,
             'passenger_count' => $request->passenger_count,
+            'number_of_seats' => $request->passenger_count,
             'trip_type' => $normalizedTripType, 
             'flight_class' => $flightClass,
-            'pnr_code' => $pnrCode,
+            'booking_code' => $pnrCode,
             'total_price' => $totalPrice,
             'passengers_data' => $passengersWithSeats,
             'ngay_ve' => $request->input('ngay_ve'),
