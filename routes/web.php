@@ -10,6 +10,8 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AdminAirportController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\AdminFlightController;
 
 // Trang chu
 Route::get('/', function () {
@@ -19,7 +21,13 @@ Route::get('/', function () {
 
     return view('home', compact('sanBays'));
 });
+// Trang lien he
+Route::get('/lien-he', [ContactController::class, 'index'])
+    ->name('contact');
 
+// Xu ly gui thong tin lien he
+Route::post('/lien-he', [ContactController::class, 'send'])
+    ->name('contact.send');
 // Tìm kiếm chuyến bay
 Route::get('/flights', [FlightController::class, 'index'])
     ->name('flights.search');
@@ -33,8 +41,7 @@ Route::post('/booking/store', [BookingController::class, 'store'])
 
 Route::get('/booking/success/{id}', [BookingController::class, 'success'])
     ->name('booking.success');
-Route::get('/flights', [FlightController::class, 'index'])
-    ->name('flights.search');
+
 
 // Dang ky
 Route::get('/register', [AuthController::class, 'showRegister'])
@@ -74,6 +81,13 @@ Route::get('/tra-cuu-ve', [PaymentController::class, 'showLookupForm'])
 Route::post('/tra-cuu-ve', [PaymentController::class, 'lookup'])
     ->name('ticket.lookup');
 
+
+
+// xem lich su dat ve
+Route::middleware(['auth'])->group(function () {
+    Route::get('/lich-su-dat-ve', [PaymentController::class, 'history'])->name('ticket.history');
+});
+
 // Xem chi tiet ve
 Route::get('/ve/{booking_code}', [PaymentController::class, 'showDetail'])
     ->name('ticket.detail');
@@ -103,5 +117,8 @@ Route::middleware(['role:admin'])
     ->name('admin.')
     ->group(function () {
         Route::resource('airports', AdminAirportController::class)
+            ->except(['show']);
+
+        Route::resource('flights', AdminFlightController::class)
             ->except(['show']);
     });

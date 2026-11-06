@@ -31,4 +31,11 @@ class Flight extends Model
     {
         return $this->belongsTo(Airport::class, 'arrival_airport_id');
     }
+
+    // Một chuyến bay có thể có nhiều đơn đặt vé
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class);
+    }
+
 }
