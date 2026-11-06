@@ -213,13 +213,125 @@
                 <!-- Các input ẩn chứa mã ghế được chọn -->
                 <div id="selected-seats-inputs"></div>
             </div>
-            <!-- Hết khung sơ đồ ghế -->
-            <button type="submit" class="btn btn-primary mt-3">Xác nhận đặt vé</button>
+            <!-- === KHUNG CHỌN MÃ ƯU ĐÃI (TOGGLE VOUCHER) === -->
+            <div class="card p-3 mb-4 border shadow-sm bg-light">
+                <h5 class="fw-bold text-primary mb-3"><i class="bi bi-tag-fill me-2"></i>Chọn mã ưu đãi / khuyến mãi</h5>
+                
+                @if(isset($availableVouchers) && count($availableVouchers) > 0)
+                    <div id="vouchers-list">
+                        @foreach($availableVouchers as $voucher)
+                            @php
+                                $isEligible = ($subTotal ?? 0) >= $voucher['min_spend'];
+                            @endphp
+
+                            <div class="voucher-card border p-3 mb-2 rounded {{ $isEligible ? 'bg-white shadow-sm' : 'bg-light text-muted opacity-75' }}"
+                                 @if($isEligible)
+                                     onclick="toggleVoucher('{{ $voucher['code'] }}', {{ $voucher['discount_percent'] }}, this)"
+                                     style="cursor: pointer; transition: all 0.2s;"
+                                 @endif>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="fw-bold mb-1 {{ $isEligible ? 'text-dark' : 'text-muted' }}">
+                                            <i class="bi bi-gift text-danger me-1"></i> {{ $voucher['title'] }}
+                                        </h6>
+                                        <small class="text-muted">Áp dụng cho đơn hàng từ {{ number_format($voucher['min_spend']) }} VNĐ trở lên</small>
+                                    </div>
+                                    
+                                    <div>
+                                        @if($isEligible)
+                                            <span class="badge bg-secondary voucher-badge px-3 py-2">Chưa chọn</span>
+                                        @else
+                                            <span class="badge bg-secondary">Chưa đủ điều kiện</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <p class="text-muted small mb-0">Không có mã ưu đãi nào khả dụng cho đơn hàng này.</p>
+                @endif
+
+                <!-- Input ẩn để lưu mã voucher gửi về Controller khi submit form -->
+                <input type="hidden" name="selected_voucher" id="selected_voucher_input" value="">
+
+                <!-- BẢNG TỔNG KẾT CHI TIẾT TIỀN -->
+                <div class="mt-3 p-3 bg-white rounded border">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Tạm tính:</span>
+                        <strong id="subtotal-display">{{ number_format($subTotal ?? 0) }} VNĐ</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1 text-success">
+                        <span>Giảm giá ưu đãi:</span>
+                        <strong>-<span id="discount-display">0</span> VNĐ</strong>
+                    </div>
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between text-danger fs-5 fw-bold">
+                        <span>Tổng thanh toán:</span>
+                        <span id="final-price-display">{{ number_format($subTotal ?? 0) }} VNĐ</span>
+                    </div>
+                </div>
+            </div>
+            <!-- === HẾT KHUNG CHỌN MÃ ƯU ĐÃI === -->
+
+            <!-- NÚT ĐIỀU HƯỚNG -->
+            <div class="d-flex gap-3 mt-3">
+                <a href="{{ url()->previous() }}" class="btn btn-secondary w-50 py-2">
+                    <i class="bi bi-arrow-left me-1"></i> Quay lại
+                </a>
+                <button type="submit" class="btn btn-primary w-50 py-2">Xác nhận đặt vé</button>
+            </div>
         </form>
     </div>
 </div>
 
 <script>
+    //
+    let activeCode = null;
+    const subtotalVal = {{ $subTotal ?? 0 }};
+
+    function toggleVoucher(code, percent, element) {
+        const badge = element.querySelector('.voucher-badge');
+        const input = document.getElementById('selected_voucher_input');
+        const discountDisplay = document.getElementById('discount-display');
+        const finalPriceDisplay = document.getElementById('final-price-display');
+
+        if (activeCode === code) {
+            // Click lần nữa để hủy chọn (Toggle OFF)
+            activeCode = null;
+            input.value = '';
+            element.classList.remove('border-primary', 'bg-primary-subtle');
+            badge.className = 'badge bg-secondary voucher-badge px-3 py-2';
+            badge.innerText = 'Chưa chọn';
+            updatePrice(0);
+        } else {
+            // Reset tất cả các card khác về trạng thái chưa chọn
+            document.querySelectorAll('.voucher-card').forEach(c => {
+                c.classList.remove('border-primary', 'bg-primary-subtle');
+                let b = c.querySelector('.voucher-badge');
+                if(b) {
+                    b.className = 'badge bg-secondary voucher-badge px-3 py-2';
+                    b.innerText = 'Chưa chọn';
+                }
+            });
+
+            // Chọn mã này (Toggle ON)
+            activeCode = code;
+            input.value = code;
+            element.classList.add('border-primary', 'bg-primary-subtle');
+            badge.className = 'badge bg-success voucher-badge px-3 py-2';
+            badge.innerText = 'Đang áp dụng ✓';
+            updatePrice(percent);
+        }
+    }
+
+    function updatePrice(percent) {
+        let discountAmount = subtotalVal * (percent / 100);
+        let finalPrice = subtotalVal - discountAmount;
+        
+        document.getElementById('discount-display').innerText = discountAmount.toLocaleString('vi-VN');
+        document.getElementById('final-price-display').innerText = finalPrice.toLocaleString('vi-VN') + ' VNĐ';
+    }
     document.addEventListener('DOMContentLoaded', function () {
         const countInput = document.getElementById('passenger_count');
         const container = document.getElementById('passengers_list_container');
