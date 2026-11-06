@@ -1,6 +1,7 @@
 @extends('admin.airports.layout')
 
 @section('title', 'Quản lý hoàn tiền')
+@section('topbar-title', 'Quản lý hoàn tiền')
 
 @section('content')
 @php
@@ -11,209 +12,116 @@
     ];
 @endphp
 
-<style>
-    .refund-stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 18px;
-        margin-bottom: 24px;
-    }
-
-    .refund-stat {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 22px;
-    }
-
-    .refund-stat-label {
-        color: #64748b;
-        font-size: 14px;
-        margin-bottom: 10px;
-    }
-
-    .refund-stat-value {
-        font-size: 26px;
-        font-weight: 700;
-        color: #0f172a;
-    }
-
-    .refund-card {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 24px;
-        margin-bottom: 24px;
-    }
-
-    .refund-filters {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-bottom: 22px;
-    }
-
-    .refund-filters input,
-    .refund-filters select {
-        padding: 11px 14px;
-        border: 1px solid #cbd5e1;
-        border-radius: 8px;
-        font-size: 14px;
-    }
-
-    .refund-filters input {
-        flex: 1;
-        min-width: 220px;
-    }
-
-    .refund-table-wrapper {
-        overflow-x: auto;
-    }
-
-    .refund-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .refund-table th,
-    .refund-table td {
-        padding: 14px 12px;
-        border-bottom: 1px solid #e2e8f0;
-        text-align: left;
-        vertical-align: middle;
-    }
-
-    .refund-table th {
-        color: #475569;
-        font-size: 13px;
-        font-weight: 600;
-        background: #f8fafc;
-    }
-
-    .refund-status {
-        display: inline-block;
-        padding: 6px 10px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-        white-space: nowrap;
-    }
-
-    .refund-status-pending_refund {
-        background: #fef3c7;
-        color: #92400e;
-    }
-
-    .refund-status-completed {
-        background: #dcfce7;
-        color: #166534;
-    }
-
-    .refund-status-no_refund {
-        background: #f1f5f9;
-        color: #475569;
-    }
-
-    .refund-action {
-        color: #0f766e;
-        font-weight: 600;
-        text-decoration: none;
-    }
-
-    .refund-action:hover {
-        text-decoration: underline;
-    }
-
-    .refund-empty {
-        text-align: center;
-        padding: 36px;
-        color: #64748b;
-    }
-
-    .refund-pagination {
-        margin-top: 22px;
-    }
-</style>
-
-<div class="page-header">
-    <div>
-        <h1>Quản lý hoàn tiền</h1>
-        <p>Theo dõi và xử lý các yêu cầu hoàn tiền của khách hàng.</p>
-    </div>
+<div class="page-heading">
+    <small>QUẢN TRỊ HỆ THỐNG / HOÀN TIỀN</small>
+    <h1>Quản lý hoàn tiền</h1>
+    <p>
+        Theo dõi, tìm kiếm và xác nhận xử lý
+        các yêu cầu hoàn tiền trong hệ thống SkyBooking.
+    </p>
 </div>
 
-<div class="refund-stats">
-    <div class="refund-stat">
-        <div class="refund-stat-label">Yêu cầu đang chờ</div>
-        <div class="refund-stat-value">
+<div class="finance-stats" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
+    <div class="finance-stat">
+        <div class="finance-stat-label">Yêu cầu đang chờ</div>
+        <div class="finance-stat-value">
             {{ number_format($pendingCount) }}
         </div>
-    </div>
-
-    <div class="refund-stat">
-        <div class="refund-stat-label">Yêu cầu đã hoàn tất</div>
-        <div class="refund-stat-value">
-            {{ number_format($completedCount) }}
+        <div class="finance-stat-note">
+            Các yêu cầu chưa hoàn tất
         </div>
     </div>
 
-    <div class="refund-stat">
-        <div class="refund-stat-label">Tổng tiền chờ hoàn</div>
-        <div class="refund-stat-value">
+    <div class="finance-stat">
+        <div class="finance-stat-label">Yêu cầu đã hoàn tất</div>
+        <div class="finance-stat-value">
+            {{ number_format($completedCount) }}
+        </div>
+        <div class="finance-stat-note">
+            Đã xác nhận hoàn tiền trên hệ thống
+        </div>
+    </div>
+
+    <div class="finance-stat">
+        <div class="finance-stat-label">Tổng giá trị đơn chờ hoàn</div>
+        <div class="finance-stat-value" style="font-size:21px;">
             {{ number_format($pendingAmount, 0, ',', '.') }} đ
+        </div>
+        <div class="finance-stat-note">
+            Tổng giá trị đặt vé của yêu cầu đang chờ
         </div>
     </div>
 </div>
 
-<div class="refund-card">
+<div class="finance-panel">
+    <div class="finance-panel-header">
+        <div>
+            <h2>Tìm kiếm yêu cầu hoàn tiền</h2>
+            <p>Lọc theo mã đặt vé, khách hàng hoặc trạng thái hoàn tiền.</p>
+        </div>
+    </div>
+
     <form method="GET"
           action="{{ route('admin.refunds.index') }}"
-          class="refund-filters">
+          class="finance-filters">
 
-        <input
-            type="text"
-            name="search"
-            value="{{ request('search') }}"
-            placeholder="Tìm mã vé, tên hoặc email khách hàng"
-        >
+        <div class="finance-field">
+            <label for="refund-search">Mã đặt vé, tên hoặc email</label>
+            <input
+                id="refund-search"
+                type="text"
+                name="search"
+                value="{{ request('search') }}"
+                placeholder="Nhập mã đặt vé hoặc thông tin khách hàng"
+            >
+        </div>
 
-        <select name="refund_status">
-            <option value="">Tất cả trạng thái</option>
+        <div class="finance-field">
+            <label for="refund-status">Trạng thái hoàn tiền</label>
+            <select id="refund-status" name="refund_status">
+                <option value="">Tất cả trạng thái</option>
 
-            <option value="pending_refund"
-                @selected(request('refund_status') === 'pending_refund')>
-                Chờ hoàn tiền
-            </option>
+                @foreach ($statusLabels as $value => $label)
+                    <option value="{{ $value }}"
+                        @selected(request('refund_status') === $value)>
+                        {{ $label }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
 
-            <option value="completed"
-                @selected(request('refund_status') === 'completed')>
-                Đã hoàn tiền
-            </option>
+        <div class="finance-filter-actions">
+            <button type="submit" class="btn btn-primary">
+                Tìm kiếm
+            </button>
 
-            <option value="no_refund"
-                @selected(request('refund_status') === 'no_refund')>
-                Không hoàn tiền
-            </option>
-        </select>
-
-        <button type="submit" class="btn btn-primary">
-            Tìm kiếm
-        </button>
-
-        <a href="{{ route('admin.refunds.index') }}"
-           class="btn btn-secondary">
-            Đặt lại
-        </a>
+            <a href="{{ route('admin.refunds.index') }}"
+               class="btn btn-secondary">
+                Đặt lại
+            </a>
+        </div>
     </form>
+</div>
 
-    <div class="refund-table-wrapper">
-        <table class="refund-table">
+<div class="finance-panel">
+    <div class="finance-panel-header">
+        <div>
+            <h2>Danh sách yêu cầu hoàn tiền</h2>
+            <p>
+                Có {{ number_format($refunds->total()) }}
+                kết quả phù hợp.
+            </p>
+        </div>
+    </div>
+
+    <div class="finance-table-wrap">
+        <table class="finance-table">
             <thead>
                 <tr>
                     <th>Mã đặt vé</th>
                     <th>Khách hàng</th>
                     <th>Chuyến bay</th>
-                    <th>Số tiền</th>
+                    <th>Giá trị đơn</th>
                     <th>Trạng thái hoàn tiền</th>
                     <th>Ngày cập nhật</th>
                     <th>Thao tác</th>
@@ -224,17 +132,19 @@
                 @forelse ($refunds as $booking)
                     <tr>
                         <td>
-                            <strong>
+                            <span class="finance-code">
                                 {{ $booking->pnr_code ?: $booking->booking_code }}
-                            </strong>
+                            </span>
                         </td>
 
                         <td>
-                            <strong>{{ $booking->passenger_name }}</strong>
+                            <span class="finance-person">
+                                {{ $booking->passenger_name }}
+                            </span>
 
-                            <div style="color:#64748b;font-size:13px;">
+                            <span class="finance-subtext">
                                 {{ $booking->passenger_email }}
-                            </div>
+                            </span>
                         </td>
 
                         <td>
@@ -242,13 +152,13 @@
                         </td>
 
                         <td>
-                            <strong>
+                            <span class="finance-amount">
                                 {{ number_format($booking->total_price, 0, ',', '.') }} đ
-                            </strong>
+                            </span>
                         </td>
 
                         <td>
-                            <span class="refund-status refund-status-{{ $booking->refund_status }}">
+                            <span class="finance-badge finance-badge-{{ $booking->refund_status }}">
                                 {{ $statusLabels[$booking->refund_status] ?? $booking->refund_status }}
                             </span>
                         </td>
@@ -258,15 +168,15 @@
                         </td>
 
                         <td>
-                            <a class="refund-action"
-                               href="{{ route('admin.refunds.show', $booking) }}">
-                                Xem chi tiết
+                            <a href="{{ route('admin.refunds.show', $booking) }}"
+                               class="btn btn-primary">
+                                Chi tiết
                             </a>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="refund-empty">
+                        <td colspan="7" class="finance-empty">
                             Chưa có yêu cầu hoàn tiền phù hợp.
                         </td>
                     </tr>
@@ -275,8 +185,10 @@
         </table>
     </div>
 
-    <div class="refund-pagination">
-        {{ $refunds->links() }}
-    </div>
+    @if ($refunds->hasPages())
+        <div class="finance-pagination">
+            {{ $refunds->withQueryString()->links() }}
+        </div>
+    @endif
 </div>
 @endsection

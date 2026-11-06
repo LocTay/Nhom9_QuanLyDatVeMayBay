@@ -1,6 +1,7 @@
 @extends('admin.airports.layout')
 
 @section('title', 'Chi tiết hoàn tiền')
+@section('topbar-title', 'Chi tiết hoàn tiền')
 
 @section('content')
 @php
@@ -11,152 +12,75 @@
         'completed' => 'Đã hoàn tiền',
         'no_refund' => 'Không hoàn tiền',
     ];
+
+    $bookingLabels = [
+        'pending' => 'Chờ thanh toán',
+        'paid' => 'Đã thanh toán',
+        'failed' => 'Thất bại',
+        'cancelled' => 'Đã hủy',
+        'refund_pending' => 'Chờ hoàn tiền',
+    ];
 @endphp
 
-<style>
-    .refund-detail-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 20px;
-        margin-bottom: 20px;
-    }
-
-    .refund-detail-card {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 24px;
-        margin-bottom: 20px;
-    }
-
-    .refund-detail-card h2 {
-        font-size: 18px;
-        margin: 0 0 18px;
-        color: #0f172a;
-    }
-
-    .refund-detail-row {
-        display: flex;
-        justify-content: space-between;
-        gap: 16px;
-        padding: 12px 0;
-        border-bottom: 1px solid #f1f5f9;
-    }
-
-    .refund-detail-row span {
-        color: #64748b;
-    }
-
-    .refund-detail-row strong {
-        text-align: right;
-        overflow-wrap: anywhere;
-    }
-
-    .refund-detail-amount {
-        font-size: 26px;
-        font-weight: 700;
-        color: #0f766e;
-    }
-
-    .refund-detail-actions {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-        margin-top: 20px;
-    }
-
-    .refund-detail-notice {
-        background: #fffbeb;
-        border: 1px solid #fde68a;
-        border-radius: 8px;
-        padding: 14px;
-        color: #92400e;
-        margin-bottom: 20px;
-    }
-
-    .refund-detail-success {
-        background: #f0fdf4;
-        border: 1px solid #bbf7d0;
-        color: #166534;
-        padding: 14px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-    }
-
-    .refund-detail-error {
-        background: #fef2f2;
-        border: 1px solid #fecaca;
-        color: #991b1b;
-        padding: 14px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-    }
-</style>
-
-<div class="page-header">
-    <div>
-        <h1>Chi tiết yêu cầu hoàn tiền</h1>
-        <p>Mã đặt vé: {{ $code }}</p>
-    </div>
+<div class="page-heading">
+    <small>QUẢN TRỊ HỆ THỐNG / HOÀN TIỀN / CHI TIẾT</small>
+    <h1>Chi tiết yêu cầu hoàn tiền</h1>
+    <p>Mã đặt vé: {{ $code }}</p>
 </div>
 
-@if (session('success'))
-    <div class="refund-detail-success">
-        {{ session('success') }}
-    </div>
-@endif
-
-@if (session('error'))
-    <div class="refund-detail-error">
-        {{ session('error') }}
-    </div>
-@endif
-
-<div class="refund-detail-grid">
-    <div class="refund-detail-card">
+<div class="finance-detail-grid">
+    <div class="finance-detail-card">
         <h2>Thông tin khách hàng</h2>
 
-        <div class="refund-detail-row">
+        <div class="finance-detail-row">
             <span>Họ tên</span>
             <strong>{{ $booking->passenger_name }}</strong>
         </div>
 
-        <div class="refund-detail-row">
+        <div class="finance-detail-row">
             <span>Email</span>
             <strong>{{ $booking->passenger_email }}</strong>
         </div>
 
-        <div class="refund-detail-row">
+        <div class="finance-detail-row">
             <span>Số điện thoại</span>
             <strong>{{ $booking->passenger_phone ?: 'Chưa có' }}</strong>
         </div>
 
-        <div class="refund-detail-row">
+        <div class="finance-detail-row">
             <span>Số hành khách</span>
-            <strong>{{ $booking->passenger_count ?? $booking->number_of_seats ?? 1 }}</strong>
+            <strong>
+                {{ $booking->passenger_count ?? $booking->number_of_seats ?? 1 }}
+            </strong>
         </div>
     </div>
 
-    <div class="refund-detail-card">
+    <div class="finance-detail-card">
         <h2>Thông tin chuyến bay</h2>
 
-        <div class="refund-detail-row">
+        <div class="finance-detail-row">
             <span>Mã chuyến bay</span>
-            <strong>{{ $booking->flight?->flight_number ?? 'Không xác định' }}</strong>
+            <strong>
+                {{ $booking->flight?->flight_number ?? 'Không xác định' }}
+            </strong>
         </div>
 
-        <div class="refund-detail-row">
+        <div class="finance-detail-row">
             <span>Điểm đi</span>
-            <strong>{{ $booking->flight?->departureAirport?->city ?? 'Không xác định' }}</strong>
+            <strong>
+                {{ $booking->flight?->departureAirport?->city ?? 'Không xác định' }}
+            </strong>
         </div>
 
-        <div class="refund-detail-row">
+        <div class="finance-detail-row">
             <span>Điểm đến</span>
-            <strong>{{ $booking->flight?->arrivalAirport?->city ?? 'Không xác định' }}</strong>
+            <strong>
+                {{ $booking->flight?->arrivalAirport?->city ?? 'Không xác định' }}
+            </strong>
         </div>
 
-        <div class="refund-detail-row">
-            <span>Ngày khởi hành</span>
+        <div class="finance-detail-row">
+            <span>Khởi hành</span>
             <strong>
                 {{ $booking->flight?->departure_time
                     ? \Carbon\Carbon::parse($booking->flight->departure_time)->format('d/m/Y H:i')
@@ -166,65 +90,80 @@
     </div>
 </div>
 
-<div class="refund-detail-card">
+<div class="finance-detail-card">
     <h2>Thông tin yêu cầu hoàn tiền</h2>
 
-    <div class="refund-detail-row">
+    <div class="finance-detail-row">
         <span>Mã đặt vé</span>
         <strong>{{ $code }}</strong>
     </div>
 
-    <div class="refund-detail-row">
+    <div class="finance-detail-row">
         <span>Trạng thái vé</span>
-        <strong>{{ $booking->status }}</strong>
-    </div>
-
-    <div class="refund-detail-row">
-        <span>Trạng thái hoàn tiền</span>
         <strong>
-            {{ $refundLabels[$booking->refund_status] ?? $booking->refund_status }}
+            {{ $bookingLabels[$booking->status] ?? $booking->status }}
         </strong>
     </div>
 
-    <div class="refund-detail-row">
+    <div class="finance-detail-row">
+        <span>Trạng thái hoàn tiền</span>
+        <strong>
+            <span class="finance-badge finance-badge-{{ $booking->refund_status }}">
+                {{ $refundLabels[$booking->refund_status] ?? $booking->refund_status }}
+            </span>
+        </strong>
+    </div>
+
+    <div class="finance-detail-row">
         <span>Lý do hủy</span>
         <strong>{{ $booking->cancellation_reason ?: 'Không có' }}</strong>
     </div>
 
-    <div class="refund-detail-row">
+    <div class="finance-detail-row">
         <span>Thời gian cập nhật</span>
-        <strong>{{ $booking->updated_at?->format('d/m/Y H:i') }}</strong>
+        <strong>
+            {{ $booking->updated_at?->format('d/m/Y H:i') ?? 'Chưa có' }}
+        </strong>
     </div>
 
-    <div class="refund-detail-row">
+    <div class="finance-detail-row">
         <span>Giá trị đơn đặt vé</span>
-        <strong class="refund-detail-amount">
+        <strong class="finance-total">
             {{ number_format($booking->total_price, 0, ',', '.') }} đ
         </strong>
     </div>
 </div>
 
-@if ($booking->status === 'cancelled' && $booking->refund_status === 'pending_refund')
-    <div class="refund-detail-notice">
-        Đây là chức năng xác nhận hoàn tiền mô phỏng.
-        Hệ thống chưa thực hiện chuyển tiền qua ngân hàng hoặc ví điện tử.
-        Chỉ xác nhận khi yêu cầu đã được xử lý theo quy trình của nhóm.
+@if ($booking->status === 'cancelled'
+    && $booking->refund_status === 'pending_refund')
+    <div class="finance-notice">
+        <strong>Lưu ý về xác nhận hoàn tiền</strong>
+
+        <p style="margin-top:8px;">
+            Đây là chức năng xác nhận hoàn tiền mô phỏng.
+            Hệ thống chưa thực hiện chuyển tiền qua ngân hàng
+            hoặc ví điện tử. Chỉ xác nhận khi yêu cầu đã được
+            xử lý theo quy trình của nhóm.
+        </p>
     </div>
 @endif
 
-<div class="refund-detail-actions">
+<div class="finance-actions">
     <a href="{{ route('admin.refunds.index') }}"
        class="btn btn-secondary">
-        Quay lại danh sách
+        ← Quay lại danh sách
     </a>
 
-    @if ($booking->status === 'cancelled' && $booking->refund_status === 'pending_refund')
-        <form method="POST"
-              action="{{ route('admin.refunds.complete', $booking) }}"
-              onsubmit="return confirm('Xác nhận đánh dấu yêu cầu này là đã hoàn tiền?');">
+    @if ($booking->status === 'cancelled'
+        && $booking->refund_status === 'pending_refund')
+        <form
+            method="POST"
+            action="{{ route('admin.refunds.complete', $booking) }}"
+            onsubmit="return confirm('Xác nhận đánh dấu yêu cầu này là đã hoàn tiền?');"
+        >
             @csrf
 
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="btn btn-gold">
                 Xác nhận đã hoàn tiền
             </button>
         </form>

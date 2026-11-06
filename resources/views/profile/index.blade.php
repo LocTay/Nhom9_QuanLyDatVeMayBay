@@ -1,6 +1,6 @@
-
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -204,7 +204,11 @@
         <div class="logo">✈ SkyBooking</div>
 
         <nav>
-            <a href="{{ url('/') }}">Trang chủ</a>
+            <a href="{{ auth()->check() && auth()->user()->role === 'admin'
+    ? route('admin.dashboard')
+    : url('/') }}">
+                Trang chủ
+            </a>
             <a href="{{ route('profile.index') }}">Tài khoản của tôi</a>
         </nav>
     </header>
@@ -216,9 +220,9 @@
         </div>
 
         @if (session('success'))
-            <div class="success">
-                {{ session('success') }}
-            </div>
+        <div class="success">
+            {{ session('success') }}
+        </div>
         @endif
 
         <section class="profile-card">
@@ -251,9 +255,9 @@
                     <span>Số điện thoại</span>
                     <strong>
                         @if ($user->phone)
-                            {{ $user->phone }}
+                        {{ $user->phone }}
                         @else
-                            <span class="not-updated">Chưa cập nhật</span>
+                        <span class="not-updated">Chưa cập nhật</span>
                         @endif
                     </strong>
                 </div>
@@ -262,9 +266,9 @@
                     <span>Ngày sinh</span>
                     <strong>
                         @if ($user->date_of_birth)
-                            {{ \Illuminate\Support\Carbon::parse($user->date_of_birth)->format('d/m/Y') }}
+                        {{ \Illuminate\Support\Carbon::parse($user->date_of_birth)->format('d/m/Y') }}
                         @else
-                            <span class="not-updated">Chưa cập nhật</span>
+                        <span class="not-updated">Chưa cập nhật</span>
                         @endif
                     </strong>
                 </div>
@@ -273,9 +277,9 @@
                     <span>Giới tính</span>
                     <strong>
                         @if ($user->gender)
-                            {{ $user->gender }}
+                        {{ $user->gender }}
                         @else
-                            <span class="not-updated">Chưa cập nhật</span>
+                        <span class="not-updated">Chưa cập nhật</span>
                         @endif
                     </strong>
                 </div>
@@ -300,8 +304,10 @@
                     ✏️ Chỉnh sửa thông tin
                 </a>
 
-                <a href="{{ url('/') }}" class="btn btn-primary">
-                    ← Về trang chủ
+                <a href="{{ auth()->check() && auth()->user()->role === 'admin'
+    ? route('admin.dashboard')
+    : url('/') }}" class="back">
+                    ← Quay lại trang chủ
                 </a>
 
                 <a href="{{ route('password.request') }}" class="btn btn-light">
@@ -322,4 +328,5 @@
         © {{ date('Y') }} SkyBooking - Đồng hành cùng mọi chuyến bay.
     </footer>
 </body>
+
 </html>
