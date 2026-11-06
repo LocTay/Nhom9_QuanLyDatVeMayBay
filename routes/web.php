@@ -10,6 +10,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AdminAirportController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\AdminFlightController;
 
 // Trang chu
@@ -20,7 +21,13 @@ Route::get('/', function () {
 
     return view('home', compact('sanBays'));
 });
+// Trang lien he
+Route::get('/lien-he', [ContactController::class, 'index'])
+    ->name('contact');
 
+// Xu ly gui thong tin lien he
+Route::post('/lien-he', [ContactController::class, 'send'])
+    ->name('contact.send');
 // Tìm kiếm chuyến bay
 Route::get('/flights', [FlightController::class, 'index'])
     ->name('flights.search');
@@ -34,8 +41,7 @@ Route::post('/booking/store', [BookingController::class, 'store'])
 
 Route::get('/booking/success/{id}', [BookingController::class, 'success'])
     ->name('booking.success');
-Route::get('/flights', [FlightController::class, 'index'])
-    ->name('flights.search');
+
 
 // Dang ky
 Route::get('/register', [AuthController::class, 'showRegister'])
