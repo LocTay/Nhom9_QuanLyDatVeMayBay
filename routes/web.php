@@ -75,6 +75,13 @@ Route::get('/tra-cuu-ve', [PaymentController::class, 'showLookupForm'])
 Route::post('/tra-cuu-ve', [PaymentController::class, 'lookup'])
     ->name('ticket.lookup');
 
+
+
+// xem lich su dat ve
+Route::middleware(['auth'])->group(function () {
+    Route::get('/lich-su-dat-ve', [PaymentController::class, 'history'])->name('ticket.history');
+});
+
 // Xem chi tiet ve
 Route::get('/ve/{booking_code}', [PaymentController::class, 'showDetail'])
     ->name('ticket.detail');

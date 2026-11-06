@@ -437,14 +437,6 @@
 
         .trip-type {
             display: flex;
-<<<<<<< HEAD
-            gap: 24px;
-            margin-bottom: 25px;
-        }
-
-        .trip-type label {
-            cursor: pointer;
-=======
             align-items: center;
             flex-wrap: wrap;
             gap: 10px;
@@ -472,7 +464,6 @@
 
         .trip-option input {
             accent-color: var(--navy);
->>>>>>> 6ce392736ef507a26f5ead9550d5984dea71a065
         }
 
         .form-grid {
@@ -605,7 +596,7 @@
 
         .service-grid {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 18px;
         }
 
@@ -642,6 +633,10 @@
 
         .service-card:nth-child(3) .service-icon {
             background: #e9f5f1;
+        }
+
+        .service-card:nth-child(4) .service-icon {
+            background: #f4edf9;
         }
 
         .service-card h3 {
@@ -746,6 +741,7 @@
             }
 
             .service-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
                 gap: 12px;
             }
 
@@ -957,12 +953,13 @@
                 <span>Tra cứu vé</span>
             </a>
 
-            <a href="#tienich" class="side-link">
-                <span class="side-icon">✧</span>
-                <span>Dịch vụ</span>
+            @auth
+
+            <a href="{{ route('ticket.history') }}" class="side-link">
+                <span class="side-icon">📜</span>
+                <span>Lịch sử đặt vé</span>
             </a>
 
-            @auth
             <a href="{{ route('profile.index') }}" class="side-link">
                 <span class="side-icon">♙</span>
                 <span>Tài khoản của tôi</span>
@@ -974,7 +971,18 @@
                 <span class="side-icon">✧</span>
                 <span>Quản lý sân bay</span>
             </a>
+
+            <a href="{{ route('admin.flights.index') }}" class="side-link">
+                <span class="side-icon">✈</span>
+                <span>Quản lý chuyến bay</span>
+            </a>
             @endif
+
+            <a href="#tienich" class="side-link">
+                <span class="side-icon">✧</span>
+                <span>Dịch vụ</span>
+            </a>
+
 
             <a href="#footer" class="side-link">
                 <span class="side-icon">☏</span>
@@ -999,6 +1007,7 @@
     <!-- NỘI DUNG CHÍNH -->
     <main class="main">
 
+
         <!-- THANH TRÊN -->
         <header class="topbar">
             <div>
@@ -1020,6 +1029,10 @@
                     Xin chào, <strong>{{ Auth::user()->name }}</strong>
                 </span>
 
+                <a href="{{ route('ticket.history') }}" class="top-button">
+                    📜 Lịch sử vé
+                </a>
+
                 <a href="{{ route('profile.index') }}" class="top-button">
                     ♙ Tài khoản
                 </a>
@@ -1033,6 +1046,7 @@
                 @endguest
             </div>
         </header>
+
 
         @if (session('success'))
         <div class="notice success">
@@ -1215,6 +1229,21 @@
                 </article>
 
                 <article class="service-card">
+                    <div class="service-icon">📜</div>
+                    <h3>Lịch sử đặt vé</h3>
+                    <p>Xem lại toàn bộ danh sách các chuyến bay bạn đã đặt chỗ.</p>
+                    @auth
+                    <a href="{{ route('ticket.history') }}" class="service-action">
+                        Xem lịch sử <span>→</span>
+                    </a>
+                    @else
+                    <a href="{{ route('login') }}" class="service-action">
+                        Đăng nhập để xem <span>→</span>
+                    </a>
+                    @endauth
+                </article>
+
+                <article class="service-card">
                     <div class="service-icon">♙</div>
                     <h3>Quản lý tài khoản</h3>
                     <p>Cập nhật thông tin cá nhân và quản lý thông tin tài khoản.</p>
@@ -1321,5 +1350,4 @@
         });
     </script>
 </body>
-
 </html>

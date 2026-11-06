@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Http\Request;
-use App\Models\Flight;
 use App\Models\Booking;
+use App\Models\Flight;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class BookingController extends Controller
 {
@@ -14,26 +16,29 @@ class BookingController extends Controller
     {
         $flight = Flight::findOrFail($id);
 
-        // Nhận thêm thông tin loại vé và hạng vé từ URL
+        if (Carbon::now()->addHours(3)->greaterThan(Carbon::parse($flight->departure_time))) {
+            return redirect()->route('flights.search')
+                ->with('error', 'Chuyến bay này đã khởi hành hoặc còn dưới 3 tiếng nữa là khởi hành, không thể đặt vé.');
+        }
+
         $tripType = $request->query('trip_type', 'one_way');
         $flightClass = $request->query('flight_class', 'Phổ thông');
         $ngayVe = $request->query('ngay_ve');
 
-        // Lấy tất cả các booking của chuyến bay này để gom ghế đã đặt
-        $existingBookings = \App\Models\Booking::where('flight_id', $id)->get();
+        // Vé đã hủy không còn giữ ghế.
+        $existingBookings = Booking::where('flight_id', $id)
+            ->where('status', '!=', 'cancelled')
+            ->get();
         $bookedSeats = [];
 
         foreach ($existingBookings as $booking) {
-            if (!empty($booking->passengers_data) && is_array($booking->passengers_data)) {
-                foreach ($booking->passengers_data as $p) {
-                    if (!empty($p['seat'])) {
-                        $bookedSeats[] = $p['seat'];
-                    }
+            foreach ($booking->passengers_data ?? [] as $passenger) {
+                if (!empty($passenger['seat'])) {
+                    $bookedSeats[] = $passenger['seat'];
                 }
             }
         }
 
-        // Đếm số ghế đã đặt thực tế cho từng khoang (A, B, C)
         $bookedCounts = ['A' => 0, 'B' => 0, 'C' => 0];
         foreach ($bookedSeats as $seat) {
             $prefix = substr($seat, 0, 1);
@@ -42,31 +47,29 @@ class BookingController extends Controller
             }
         }
 
-        // Quy định số lượng cố định cho khoang A và B
         $maxA = 10;
         $maxB = 10;
-
-        // Khoang Phổ thông (C) linh động theo tổng số ghế trống thực tế của chuyến bay
-        $totalAvailableFlightSeats = $flight->available_seats;
-        $maxC = max(0, $totalAvailableFlightSeats - ($maxA - $bookedCounts['A']) - ($maxB - $bookedCounts['B']));
-
+        $maxC = max(0, $flight->available_seats - $maxA - $maxB);
         $maxSeats = [
             'A' => $maxA,
             'B' => $maxB,
             'C' => $maxC > 0 ? $maxC : 80,
         ];
-
         $remainingSeats = [
             'A' => max(0, $maxSeats['A'] - $bookedCounts['A']),
             'B' => max(0, $maxSeats['B'] - $bookedCounts['B']),
             'C' => max(0, $maxSeats['C'] - $bookedCounts['C']),
         ];
 
-        return view('booking.create', compact('flight', 'tripType', 'flightClass', 'ngayVe', 'bookedSeats', 'remainingSeats', 'maxSeats'));
+        return view('booking.create', compact(
+            'flight', 'tripType', 'flightClass', 'ngayVe',
+            'bookedSeats', 'remainingSeats', 'maxSeats'
+        ));
     }
+
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'flight_id' => 'required|exists:flights,id',
             'passenger_name' => 'required|string|max:255',
             'passenger_email' => 'required|email|max:255',
@@ -74,46 +77,52 @@ class BookingController extends Controller
             'passenger_count' => 'required|integer|min:1',
             'trip_type' => 'required|string',
             'flight_class' => 'required|string',
+            'ngay_ve' => 'nullable|date',
         ], [
             'passenger_phone.required' => 'Vui lòng nhập số điện thoại.',
             'passenger_phone.regex' => 'Số điện thoại không hợp lệ (phải bắt đầu bằng số 0 và có từ 10 đến 11 chữ số).',
         ]);
 
-        // Lấy thông tin chuyến bay và kiểm tra tổng số ghế trống còn lại của chuyến
-        $flight = Flight::findOrFail($request->flight_id);
+        $flight = Flight::findOrFail($validated['flight_id']);
+        $passengerCount = (int) $validated['passenger_count'];
 
-        if ($flight->available_seats < $request->passenger_count) {
-            return back()->withErrors(['passenger_count' => 'Chuyến bay không còn đủ số ghế trống cho số lượng hành khách này.'])->withInput();
+        if (Carbon::now()->addHours(3)->greaterThan(Carbon::parse($flight->departure_time))) {
+            return back()->withErrors([
+                'flight_id' => 'Chuyến bay này đã khởi hành hoặc còn dưới 3 tiếng nữa là khởi hành, không thể đặt vé.',
+            ])->withInput();
         }
 
-        // Chuẩn hóa loại chuyến: Chấp nhận cả 'round_trip' lẫn 'khu_hoi'
-        $tripTypeInput = $request->trip_type;
-        $isRoundTrip = ($tripTypeInput == 'round_trip' || $tripTypeInput == 'khu_hoi');
+        if ($flight->available_seats < $passengerCount) {
+            return back()->withErrors([
+                'passenger_count' => 'Chuyến bay không còn đủ số ghế trống cho số lượng hành khách này.',
+            ])->withInput();
+        }
+
+        $isRoundTrip = in_array($validated['trip_type'], ['round_trip', 'khu_hoi'], true);
         $normalizedTripType = $isRoundTrip ? 'round_trip' : 'one_way';
 
-        // RÀNG BUỘC VÉ KHỨ HỒI TRONG CONTROLLER
-        if ($normalizedTripType === 'round_trip') {
+        if ($isRoundTrip) {
             $ngayVe = $request->input('ngay_ve');
             if (empty($ngayVe)) {
-                return back()->withErrors(['trip_type' => 'Vé khứ hồi bắt buộc phải có ngày về hợp lệ.'])->withInput();
+                return back()->withErrors([
+                    'trip_type' => 'Vé khứ hồi bắt buộc phải có ngày về hợp lệ.',
+                ])->withInput();
             }
 
-            $departureAirportId = $flight->departure_airport_id;
-            $arrivalAirportId = $flight->arrival_airport_id;
-
-            $hasReturnFlight = Flight::where('departure_airport_id', $arrivalAirportId)
-                ->where('arrival_airport_id', $departureAirportId)
+            $hasReturnFlight = Flight::where('departure_airport_id', $flight->arrival_airport_id)
+                ->where('arrival_airport_id', $flight->departure_airport_id)
                 ->whereDate('departure_time', $ngayVe)
                 ->where('status', 'scheduled')
-                ->where('available_seats', '>=', $request->passenger_count)
+                ->where('available_seats', '>=', $passengerCount)
                 ->exists();
 
             if (!$hasReturnFlight) {
-                return back()->withErrors(['passenger_count' => 'Rất tiếc, vào ngày về đã chọn không có chuyến bay chiều ngược lại. Không thể đặt vé khứ hồi!'])->withInput();
+                return back()->withErrors([
+                    'passenger_count' => 'Rất tiếc, vào ngày về đã chọn không có chuyến bay chiều ngược lại. Không thể đặt vé khứ hồi!',
+                ])->withInput();
             }
         }
 
-        // Chuẩn hóa mảng hành khách và tự động gán hành khách số 1 từ người đại diện
         $passengersInput = $request->input('passengers', []);
         if (empty($passengersInput[0]['name'])) {
             $passengersInput[0]['name'] = $request->passenger_name;
@@ -122,35 +131,25 @@ class BookingController extends Controller
             $passengersInput[0]['gender'] = $request->passenger_gender;
         }
 
-        // Xác định tiền tố mã ghế theo hạng vé thực tế
-        $flightClass = $request->flight_class;
-        $prefix = 'C';
-        if ($flightClass === 'thuong_gia') {
-            $prefix = 'A';
-        } elseif ($flightClass === 'pho_thong_dac_biet') {
-            $prefix = 'B';
-        }
+        $flightClass = $validated['flight_class'];
+        $prefix = match ($flightClass) {
+            'thuong_gia' => 'A',
+            'pho_thong_dac_biet' => 'B',
+            default => 'C',
+        };
 
-        // 1. Quét toàn bộ các đơn hàng đã đặt trước đó của chuyến bay này để gom các ghế đã có người ngồi
-        $existingBookings = Booking::where('flight_id', $request->flight_id)->get();
-        $bookedSeats = [];
-        foreach ($existingBookings as $bk) {
-            if (!empty($bk->passengers_data) && is_array($bk->passengers_data)) {
-                foreach ($bk->passengers_data as $p) {
-                    if (!empty($p['seat'])) {
-                        $bookedSeats[] = $p['seat'];
-                    }
-                }
-            }
-        }
-
-        // 2. Nhận dữ liệu ghế do người dùng tự chọn từ sơ đồ trực quan và kiểm tra an toàn
         $passengersWithSeats = [];
-        foreach ($passengersInput as $index => $passenger) {
+        $selectedSeats = [];
+        foreach ($passengersInput as $passenger) {
             $selectedSeat = $passenger['seat'] ?? null;
+            if ($selectedSeat && in_array($selectedSeat, $selectedSeats, true)) {
+                return back()->withErrors([
+                    'passenger_count' => "Ghế {$selectedSeat} đã được chọn nhiều lần. Vui lòng chọn ghế khác!",
+                ])->withInput();
+            }
 
-            if ($selectedSeat && in_array($selectedSeat, $bookedSeats)) {
-                return back()->withErrors(['passenger_count' => "Ghế {$selectedSeat} đã có người đặt. Vui lòng chọn ghế khác!"])->withInput();
+            if ($selectedSeat) {
+                $selectedSeats[] = $selectedSeat;
             }
 
             $passengersWithSeats[] = [
@@ -158,89 +157,69 @@ class BookingController extends Controller
                 'gender' => $passenger['gender'] ?? 'Nam',
                 'seat' => $selectedSeat,
             ];
-
-            if ($selectedSeat) {
-                $bookedSeats[] = $selectedSeat;
-            }
         }
 
-        // Tạo mã PNR ngẫu nhiên
+        // Chính sách giá mới được cập nhật trên upstream/main.
+        $classMultiplier = match ($flightClass) {
+            'pho_thong_dac_biet' => 1.4,
+            'thuong_gia' => 2.2,
+            default => 1.0,
+        };
+        $tripFactor = $isRoundTrip ? match ($flightClass) {
+            'pho_thong' => 1.95,
+            'pho_thong_dac_biet' => 1.90,
+            'thuong_gia' => 1.85,
+            default => 1.90,
+        } : 1.0;
+
         $pnrCode = strtoupper(Str::random(6));
 
-        // Tính hệ số nhân theo chính sách giá vé khứ hồi / một chiều
-        $multiplier = 1;
-
-        if ($isRoundTrip) {
-            switch ($flightClass) {
-                case 'pho_thong':
-                    $multiplier = 1.95;
-                    break;
-                case 'pho_thong_dac_biet':
-                    $multiplier = 1.90;
-                    break;
-                case 'thuong_gia':
-                    $multiplier = 1.85;
-                    break;
-                default:
-                    $multiplier = 1.90;
-                    break;
-            }
-        }
-
-        // Tính tổng tiền = Giá vé cơ bản * Số lượng hành khách * Hệ số hạng vé
-        $totalPrice = $flight->price * $request->passenger_count * $multiplier;
-
-
-        // Lưu đơn đặt vé và cập nhật số ghế trong cùng transaction
+        // Cả tạo booking và cập nhật số ghế đều nằm trong cùng transaction.
         $booking = DB::transaction(function () use (
-            $request,
-            $pnrCode,
-            $normalizedTripType,
-            $flightClass,
-            $totalPrice,
-            $passengersWithSeats
+            $request, $validated, $passengerCount, $normalizedTripType,
+            $flightClass, $classMultiplier, $tripFactor,
+            $pnrCode, $passengersWithSeats
         ) {
-            // Khóa chuyến bay để tránh hai yêu cầu cùng trừ số ghế
-            $lockedFlight = Flight::whereKey($request->flight_id)
+            $lockedFlight = Flight::whereKey($validated['flight_id'])
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($lockedFlight->available_seats < $request->passenger_count) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
+            if (Carbon::now()->addHours(3)->greaterThan(Carbon::parse($lockedFlight->departure_time))) {
+                throw ValidationException::withMessages([
+                    'flight_id' => 'Chuyến bay không còn đủ thời gian để đặt vé.',
+                ]);
+            }
+
+            if ($lockedFlight->available_seats < $passengerCount) {
+                throw ValidationException::withMessages([
                     'passenger_count' => 'Chuyến bay không còn đủ số ghế trống.',
                 ]);
             }
 
-            // Kiểm tra lại ghế đã đặt bên trong transaction
             $occupiedSeats = Booking::where('flight_id', $lockedFlight->id)
                 ->where('status', '!=', 'cancelled')
                 ->get()
-                ->flatMap(function ($existingBooking) {
-                    return collect($existingBooking->passengers_data ?? [])
-                        ->pluck('seat');
-                })
+                ->flatMap(fn (Booking $booking) => collect($booking->passengers_data ?? [])->pluck('seat'))
                 ->filter()
                 ->all();
 
             foreach ($passengersWithSeats as $passenger) {
-                if (
-                    !empty($passenger['seat']) &&
-                    in_array($passenger['seat'], $occupiedSeats, true)
-                ) {
-                    throw \Illuminate\Validation\ValidationException::withMessages([
+                if (!empty($passenger['seat']) && in_array($passenger['seat'], $occupiedSeats, true)) {
+                    throw ValidationException::withMessages([
                         'passenger_count' => 'Ghế vừa được người khác đặt. Vui lòng chọn lại.',
                     ]);
                 }
             }
 
-            // Tạo booking
+            $totalPrice = $lockedFlight->price * $classMultiplier * $tripFactor * $passengerCount;
+
             $newBooking = Booking::create([
                 'flight_id' => $lockedFlight->id,
                 'passenger_name' => $request->passenger_name,
                 'passenger_email' => $request->passenger_email,
                 'passenger_phone' => $request->passenger_phone,
                 'passenger_gender' => $request->passenger_gender,
-                'passenger_count' => $request->passenger_count,
+                'passenger_count' => $passengerCount,
                 'trip_type' => $normalizedTripType,
                 'flight_class' => $flightClass,
                 'pnr_code' => $pnrCode,
@@ -248,23 +227,21 @@ class BookingController extends Controller
                 'passengers_data' => $passengersWithSeats,
             ]);
 
-            // Chỉ trừ ghế sau khi tạo booking thành công
-            $lockedFlight->decrement(
-                'available_seats',
-                $request->passenger_count
-            );
+            $lockedFlight->decrement('available_seats', $passengerCount);
 
             return $newBooking;
         });
 
-
-        return redirect()->route('booking.success', ['id' => $booking->id, 'ngay_ve' => $request->input('ngay_ve')]);
+        return redirect()->route('booking.success', [
+            'id' => $booking->id,
+            'ngay_ve' => $request->input('ngay_ve'),
+        ]);
     }
-    // Trang thông báo đặt vé thành công
+
     public function success($id)
     {
-        // Load kèm theo flight và các quan hệ sân bay đi/đến của flight đó
-        $booking = Booking::with('flight.departureAirport', 'flight.arrivalAirport')->findOrFail($id);
+        $booking = Booking::with('flight.departureAirport', 'flight.arrivalAirport')
+            ->findOrFail($id);
 
         return view('booking.success', compact('booking'));
     }
