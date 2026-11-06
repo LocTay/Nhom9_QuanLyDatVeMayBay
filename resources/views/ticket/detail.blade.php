@@ -369,13 +369,7 @@
             <i class="fas fa-hourglass-half me-1"></i> Đang chờ duyệt...
         </span>
 
-        <!-- Nút mô phỏng Admin duyệt trực tiếp tại giao diện -->
-        <form action="{{ route('admin.ticket.approve', $booking->booking_code) }}" method="POST" class="d-inline">
-            @csrf
-            <button type="submit" class="btn btn-sm btn-primary">
-                <i class="fas fa-user-shield me-1"></i> [Admin] Duyệt thanh toán
-            </button>
-        </form>
+        
     </div>
 @elseif(($booking->status ?? '') === 'paid')
     <!-- Đã thanh toán thành công -->
