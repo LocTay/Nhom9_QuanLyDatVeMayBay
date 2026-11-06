@@ -360,13 +360,18 @@
             class="side-link {{ request()->routeIs('admin.invoices.*') ? 'active' : '' }}">
             ▤ &nbsp; Quản lý hóa đơn
         </a>
+
+        <a href="{{ route('admin.refunds.index') }}"
+            class="side-link {{ request()->routeIs('admin.refunds.*') ? 'active' : '' }}">
+            ↺ &nbsp; Quản lý hoàn tiền
+        </a>
     </aside>
 
     <main class="main">
         <header class="topbar">
             <div>
                 <small>QUẢN TRỊ HỆ THỐNG SKYBOOKING</small>
-                <strong>@yield('topbar-title', 'Quản lý sân bay')</strong>
+                <strong>@yield('topbar-title', View::yieldContent('title', 'Quản trị hệ thống'))</strong>
             </div>
 
             <a href="/">← Trở về trang chủ</a>

@@ -25,6 +25,9 @@ class Booking extends Model
         'status',
         'trip_type',
         'flight_class',
+        'payment_method',
+        'refund_status',
+        'cancellation_reason',
     ];
     protected $casts = [
         'passengers_data' => 'array', // Ép kiểu tự động mã hóa/giải mã JSON sang mảng PHP

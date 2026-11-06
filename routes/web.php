@@ -3,8 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 
+use App\Http\Controllers\AdminRefundController;
 use App\Http\Controllers\FlightController;
-use App\Http\Controllers\BookingController; // Thêm dòng gọi Controller đặt vé
+use App\Http\Controllers\BookingController;
 
 use App\Http\Controllers\AdminInvoiceController;
 use App\Http\Controllers\PaymentController;
@@ -128,4 +129,14 @@ Route::middleware(['role:admin'])
 
         Route::get('/invoices/{booking}', [AdminInvoiceController::class, 'show'])
             ->name('invoices.show');
+
+        // Quản lý yêu cầu hoàn tiền
+        Route::get('/refunds', [AdminRefundController::class, 'index'])
+            ->name('refunds.index');
+
+        Route::get('/refunds/{booking}', [AdminRefundController::class, 'show'])
+            ->name('refunds.show');
+
+        Route::post('/refunds/{booking}/complete', [AdminRefundController::class, 'complete'])
+            ->name('refunds.complete');
     });
