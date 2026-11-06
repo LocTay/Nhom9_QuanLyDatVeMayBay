@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -48,11 +49,16 @@
             text-decoration: none;
         }
 
-        button, input, select {
+        button,
+        input,
+        select {
             font: inherit;
         }
 
-        button, a, input, select {
+        button,
+        a,
+        input,
+        select {
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -77,7 +83,7 @@
             align-items: center;
             gap: 12px;
             padding: 0 10px 28px;
-            border-bottom: 1px solid rgba(255,255,255,.13);
+            border-bottom: 1px solid rgba(255, 255, 255, .13);
         }
 
         .brand-icon {
@@ -89,7 +95,7 @@
             background: var(--gold);
             color: var(--navy);
             font-size: 24px;
-            box-shadow: 0 5px 18px rgba(215,174,88,.2);
+            box-shadow: 0 5px 18px rgba(215, 174, 88, .2);
         }
 
         .brand-name {
@@ -140,13 +146,13 @@
 
         .side-link:hover {
             color: white;
-            background: rgba(255,255,255,.09);
+            background: rgba(255, 255, 255, .09);
             transform: translateX(2px);
         }
 
         .side-link.active {
             color: white;
-            background: linear-gradient(100deg, rgba(215,174,88,.24), rgba(215,174,88,.08));
+            background: linear-gradient(100deg, rgba(215, 174, 88, .24), rgba(215, 174, 88, .08));
             box-shadow: inset 3px 0 var(--gold);
         }
 
@@ -162,8 +168,8 @@
         }
 
         .sidebar-promo {
-            border: 1px solid rgba(255,255,255,.14);
-            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255, 255, 255, .14);
+            background: rgba(255, 255, 255, .06);
             border-radius: 14px;
             padding: 17px 15px;
             margin-top: 25px;
@@ -189,7 +195,7 @@
         .sidebar-bottom {
             margin-top: 20px;
             padding: 15px 10px 0;
-            border-top: 1px solid rgba(255,255,255,.12);
+            border-top: 1px solid rgba(255, 255, 255, .12);
             color: #9fb6cc;
             font-size: 10px;
             line-height: 1.9;
@@ -290,10 +296,10 @@
             align-items: center;
             color: white;
             background:
-                radial-gradient(ellipse at 90% 15%, rgba(83,155,205,.4), transparent 35%),
-                radial-gradient(ellipse at 75% 100%, rgba(215,174,88,.18), transparent 35%),
+                radial-gradient(ellipse at 90% 15%, rgba(83, 155, 205, .4), transparent 35%),
+                radial-gradient(ellipse at 75% 100%, rgba(215, 174, 88, .18), transparent 35%),
                 linear-gradient(115deg, #05264a 0%, #084779 58%, #126b9f 100%);
-            box-shadow: 0 14px 35px rgba(6,43,85,.12);
+            box-shadow: 0 14px 35px rgba(6, 43, 85, .12);
         }
 
         .hero::before {
@@ -303,7 +309,7 @@
             height: 340px;
             right: 2%;
             top: -135px;
-            border: 1px solid rgba(255,255,255,.13);
+            border: 1px solid rgba(255, 255, 255, .13);
             border-radius: 50%;
         }
 
@@ -314,7 +320,7 @@
             height: 245px;
             right: 8%;
             top: -87px;
-            border: 1px solid rgba(255,255,255,.12);
+            border: 1px solid rgba(255, 255, 255, .12);
             border-radius: 50%;
         }
 
@@ -329,8 +335,8 @@
             align-items: center;
             gap: 8px;
             color: #f2dba5;
-            border: 1px solid rgba(245,229,189,.3);
-            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(245, 229, 189, .3);
+            background: rgba(255, 255, 255, .06);
             border-radius: 30px;
             padding: 8px 13px;
             margin-bottom: 20px;
@@ -383,7 +389,7 @@
             border-radius: 17px;
             background: white;
             border: 1px solid #eaf0f6;
-            box-shadow: 0 12px 38px rgba(16,45,78,.06);
+            box-shadow: 0 12px 38px rgba(16, 45, 78, .06);
         }
 
         .section-heading {
@@ -492,7 +498,7 @@
 
         .field-control:focus {
             border-color: #3982b9;
-            box-shadow: 0 0 0 3px rgba(18,103,165,.09);
+            box-shadow: 0 0 0 3px rgba(18, 103, 165, .09);
         }
 
         .field-control:disabled {
@@ -542,13 +548,13 @@
             font-size: 12px;
             font-weight: 800;
             cursor: pointer;
-            box-shadow: 0 6px 16px rgba(215,174,88,.2);
+            box-shadow: 0 6px 16px rgba(215, 174, 88, .2);
             transition: transform .2s, box-shadow .2s;
         }
 
         .search-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 9px 21px rgba(215,174,88,.3);
+            box-shadow: 0 9px 21px rgba(215, 174, 88, .3);
         }
 
         .search-button span {
@@ -606,7 +612,7 @@
         .service-card:hover {
             transform: translateY(-4px);
             border-color: #e2c47e;
-            box-shadow: 0 12px 28px rgba(16,45,78,.07);
+            box-shadow: 0 12px 28px rgba(16, 45, 78, .07);
         }
 
         .service-icon {
@@ -948,23 +954,35 @@
             </a>
 
             @auth
-                <a href="{{ route('ticket.history') }}" class="side-link">
-                    <span class="side-icon">📜</span>
-                    <span>Lịch sử đặt vé</span>
-                </a>
 
-                <a href="{{ route('profile.index') }}" class="side-link">
-                    <span class="side-icon">♙</span>
-                    <span>Tài khoản của tôi</span>
-                </a>
+            <a href="{{ route('ticket.history') }}" class="side-link">
+                <span class="side-icon">📜</span>
+                <span>Lịch sử đặt vé</span>
+            </a>
+
+            <a href="{{ route('profile.index') }}" class="side-link">
+                <span class="side-icon">♙</span>
+                <span>Tài khoản của tôi</span>
+            </a>
             @endauth
+
+            @if (auth()->check() && auth()->user()->role === 'admin')
+            <a href="{{ route('admin.airports.index') }}" class="side-link">
+                <span class="side-icon">✧</span>
+                <span>Quản lý sân bay</span>
+            </a>
+
+            <a href="{{ route('admin.flights.index') }}" class="side-link">
+                <span class="side-icon">✈</span>
+                <span>Quản lý chuyến bay</span>
+            </a>
+            @endif
 
             <a href="#tienich" class="side-link">
                 <span class="side-icon">✧</span>
                 <span>Dịch vụ</span>
             </a>
-
-            <a href="{{ route('contact') }}" class="side-link">
+<a href="{{ route('contact') }}" class="side-link">
     <span class="side-icon">☏</span>
     <span>Liên hệ</span>
 </a>
@@ -987,6 +1005,7 @@
     <!-- NỘI DUNG CHÍNH -->
     <main class="main">
 
+
         <!-- THANH TRÊN -->
         <header class="topbar">
             <div>
@@ -996,48 +1015,49 @@
 
             <div class="account-area">
                 @guest
-                    <a href="{{ route('login') }}" class="top-button">
-                        Đăng nhập
-                    </a>
+                <a href="{{ route('login') }}" class="top-button">
+                    Đăng nhập
+                </a>
 
-                    <a href="{{ route('register') }}" class="top-button primary">
-                        Đăng ký tài khoản
-                    </a>
+                <a href="{{ route('register') }}" class="top-button primary">
+                    Đăng ký tài khoản
+                </a>
                 @else
-                    <span class="welcome">
-                        Xin chào, <strong>{{ Auth::user()->name }}</strong>
-                    </span>
+                <span class="welcome">
+                    Xin chào, <strong>{{ Auth::user()->name }}</strong>
+                </span>
 
-                    <a href="{{ route('ticket.history') }}" class="top-button">
-                        📜 Lịch sử vé
-                    </a>
+                <a href="{{ route('ticket.history') }}" class="top-button">
+                    📜 Lịch sử vé
+                </a>
 
-                    <a href="{{ route('profile.index') }}" class="top-button">
-                        ♙ Tài khoản
-                    </a>
+                <a href="{{ route('profile.index') }}" class="top-button">
+                    ♙ Tài khoản
+                </a>
 
-                    <form action="{{ route('logout') }}" method="POST" class="logout-form">
-                        @csrf
-                        <button type="submit" class="top-button primary">
-                            Đăng xuất
-                        </button>
-                    </form>
+                <form action="{{ route('logout') }}" method="POST" class="logout-form">
+                    @csrf
+                    <button type="submit" class="top-button primary">
+                        Đăng xuất
+                    </button>
+                </form>
                 @endguest
             </div>
         </header>
 
+
         @if (session('success'))
-            <div class="notice success">
-                {{ session('success') }}
-            </div>
+        <div class="notice success">
+            {{ session('success') }}
+        </div>
         @endif
 
         @if ($errors->any())
-            <div class="notice error">
-                @foreach ($errors->all() as $error)
-                    <div>{{ $error }}</div>
-                @endforeach
-            </div>
+        <div class="notice error">
+            @foreach ($errors->all() as $error)
+            <div>{{ $error }}</div>
+            @endforeach
+        </div>
         @endif
 
         <!-- BANNER CHÀO MỪNG -->
@@ -1099,9 +1119,9 @@
                         <select class="field-control" id="diem_di" name="diem_di" required>
                             <option value="">Chọn thành phố khởi hành</option>
                             @foreach ($sanBays as $sanBay)
-                                <option value="{{ $sanBay->code }}">
-                                    {{ $sanBay->city }} ({{ $sanBay->code }})
-                                </option>
+                            <option value="{{ $sanBay->code }}">
+                                {{ $sanBay->city }} ({{ $sanBay->code }})
+                            </option>
                             @endforeach
                         </select>
                     </div>
@@ -1111,9 +1131,9 @@
                         <select class="field-control" id="diem_den" name="diem_den" required>
                             <option value="">Chọn thành phố bạn muốn đến</option>
                             @foreach ($sanBays as $sanBay)
-                                <option value="{{ $sanBay->code }}">
-                                    {{ $sanBay->city }} ({{ $sanBay->code }})
-                                </option>
+                            <option value="{{ $sanBay->code }}">
+                                {{ $sanBay->city }} ({{ $sanBay->code }})
+                            </option>
                             @endforeach
                         </select>
                     </div>
@@ -1125,8 +1145,7 @@
                             type="date"
                             id="ngay_di"
                             name="ngay_di"
-                            required
-                        >
+                            required>
                     </div>
 
                     <div class="field" id="ngay_ve_field">
@@ -1136,8 +1155,7 @@
                             type="date"
                             id="ngay_ve"
                             name="ngay_ve"
-                            disabled
-                        >
+                            disabled>
                         <div class="field-hint">Chỉ áp dụng cho hành trình khứ hồi.</div>
                     </div>
 
@@ -1213,13 +1231,13 @@
                     <h3>Lịch sử đặt vé</h3>
                     <p>Xem lại toàn bộ danh sách các chuyến bay bạn đã đặt chỗ.</p>
                     @auth
-                        <a href="{{ route('ticket.history') }}" class="service-action">
-                            Xem lịch sử <span>→</span>
-                        </a>
+                    <a href="{{ route('ticket.history') }}" class="service-action">
+                        Xem lịch sử <span>→</span>
+                    </a>
                     @else
-                        <a href="{{ route('login') }}" class="service-action">
-                            Đăng nhập để xem <span>→</span>
-                        </a>
+                    <a href="{{ route('login') }}" class="service-action">
+                        Đăng nhập để xem <span>→</span>
+                    </a>
                     @endauth
                 </article>
 
@@ -1229,13 +1247,13 @@
                     <p>Cập nhật thông tin cá nhân và quản lý thông tin tài khoản.</p>
 
                     @auth
-                        <a href="{{ route('profile.index') }}" class="service-action">
-                            Xem tài khoản <span>→</span>
-                        </a>
+                    <a href="{{ route('profile.index') }}" class="service-action">
+                        Xem tài khoản <span>→</span>
+                    </a>
                     @else
-                        <a href="{{ route('login') }}" class="service-action">
-                            Đăng nhập <span>→</span>
-                        </a>
+                    <a href="{{ route('login') }}" class="service-action">
+                        Đăng nhập <span>→</span>
+                    </a>
                     @endauth
                 </article>
             </div>
@@ -1512,7 +1530,7 @@
 
         ngayDi.min = layNgayLocal();
 
-        ngayDi.addEventListener('change', function () {
+        ngayDi.addEventListener('change', function() {
             ngayVe.min = ngayDi.value || layNgayLocal();
 
             if (ngayVe.value && ngayVe.value < ngayDi.value) {
@@ -1520,13 +1538,13 @@
             }
         });
 
-        loaiChuyenRadios.forEach(function (radio) {
+        loaiChuyenRadios.forEach(function(radio) {
             radio.addEventListener('change', capNhatNgayVe);
         });
 
         capNhatNgayVe();
 
-        formTimChuyenBay.addEventListener('submit', function (e) {
+        formTimChuyenBay.addEventListener('submit', function(e) {
             if (diemDi.value === diemDen.value) {
                 e.preventDefault();
                 alert('Điểm khởi hành và điểm đến không được giống nhau.');

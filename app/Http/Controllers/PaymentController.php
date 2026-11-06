@@ -26,20 +26,27 @@ class PaymentController extends Controller
 
         $code = strtoupper(trim($request->booking_code));
 
-        $booking = Booking::where('booking_code', $code)->first();
+        $booking = Booking::where('pnr_code', $code)
+            ->orWhere('booking_code', $code)
+            ->first();
 
         if (!$booking) {
             return redirect()->back()->with('error', 'Không tìm thấy mã đặt chỗ ' . $code . ' trên hệ thống!');
         }
 
-        return redirect()->route('ticket.detail', ['booking_code' => $booking->booking_code]);
+        return redirect()->route('ticket.detail', [
+            'booking_code' => $booking->pnr_code ?: $booking->booking_code
+        ]);
     }
 
     // 3. Hiển thị chi tiết vé & chuyến bay, hành khách
     public function showDetail($booking_code)
     {
         $booking = Booking::with(['flight.departureAirport', 'flight.arrivalAirport'])
-            ->where('booking_code', $booking_code)
+            ->where(function ($query) use ($booking_code) {
+                $query->where('pnr_code', $booking_code)
+                    ->orWhere('booking_code', $booking_code);
+            })
             ->firstOrFail();
 
         return view('ticket.detail', compact('booking'));
@@ -48,7 +55,8 @@ class PaymentController extends Controller
     // 4. Xử lý mô phỏng thanh toán (pending -> paid / failed / pending)
     public function processPayment(Request $request, $booking_code)
     {
-        $booking = Booking::where('booking_code', $booking_code)->firstOrFail();
+        $booking = Booking::where('pnr_code', $booking_code)
+            ->orWhere('booking_code', $booking_code)->firstOrFail();
 
         if ($booking->status === 'paid') {
             return redirect()->back()->with('info', 'Vé này đã được thanh toán trước đó.');
@@ -82,7 +90,7 @@ class PaymentController extends Controller
     // 5. Quy tắc hủy vé (Hủy trước 24h, cộng trả lại ghế trống & mô phỏng hoàn tiền)
     public function cancelTicket(Request $request, $booking_code)
     {
-        $booking = Booking::with('flight')->where('booking_code', $booking_code)->firstOrFail();
+        $booking = Booking::with('flight')->where('pnr_code', $booking_code)->firstOrFail();
 
         if ($booking->status === 'cancelled') {
             return redirect()->back()->with('info', 'Vé này đã được hủy từ trước.');

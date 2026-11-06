@@ -626,43 +626,145 @@
                                 @endif
                             </div>
 
-                            @if(isset($chuyenBayVes) && $chuyenBayVes->isNotEmpty())
+@if(isset($chuyenBayVes) && $chuyenBayVes->isNotEmpty())
 
-                                @foreach($chuyenBayVes as $chuyenVe)
+    @foreach($chuyenBayVes as $chuyenVe)
 
-                                    <div class="return-flight">
-                                        <strong>Mã chuyến: {{ $chuyenVe->flight_number }}</strong><br>
+        <div class="return-flight">
+            <strong>Mã chuyến: {{ $chuyenVe->flight_number }}</strong><br>
 
-                                        Khởi hành:
-                                        {{ \Carbon\Carbon::parse($chuyenVe->departure_time)->format('H:i d/m/Y') }}
-                                        <br>
+            Khởi hành:
+            {{ \Carbon\Carbon::parse($chuyenVe->departure_time)->format('H:i d/m/Y') }}
+            <br>
 
-                                        Hạ cánh:
-                                        {{ \Carbon\Carbon::parse($chuyenVe->arrival_time)->format('H:i d/m/Y') }}
-                                        <br>
+            Hạ cánh:
+            {{ \Carbon\Carbon::parse($chuyenVe->arrival_time)->format('H:i d/m/Y') }}
+            <br>
 
-                                        Số ghế còn lại: {{ $chuyenVe->available_seats }}
-                                    </div>
+            Số ghế còn lại: {{ $chuyenVe->available_seats }}
+        </div>
 
-                                @endforeach
+    @endforeach
 
-                            @else
-                                <div style="color:#dc4545;font-size:12px;">
-                                    Không tìm thấy chuyến bay chiều về phù hợp.
-                                </div>
-                            @endif
-                        </div>
+@else
+    <div style="color:#dc4545;font-size:12px;">
+        Không tìm thấy chuyến bay chiều về phù hợp.
+    </div>
+@endif
 
-                    @endif
+</div>
 
-                </div>
+@endif
 
-                <div class="price-area">
+</div>
 
-                    <div class="price-label">Giá vé dự kiến</div>
+<div class="price-area">
 
-                    <div class="price">
-                        {{ number_format($finalPrice, 0, ',', '.') }} đ
+    @php
+        $rawTrip = request('loai_chuyen', request('trip_type', 'mot_chieu'));
+        $rawClass = request('hang_ve', request('flight_class', 'pho_thong'));
+
+        $passengerCount = $passengerCount ?? request('hanh_khach', 1);
+
+        $classMultiplier = 1.0;
+
+        switch ($rawClass) {
+            case 'pho_thong':
+                $classMultiplier = 1.0;
+                break;
+            case 'pho_thong_dac_biet':
+                $classMultiplier = 1.4;
+                break;
+            case 'thuong_gia':
+                $classMultiplier = 2.2;
+                break;
+            default:
+                $classMultiplier = 1.0;
+                break;
+        }
+
+        $isRoundTrip = ($rawTrip == 'round_trip' || $rawTrip == 'khu_hoi');
+
+        if (!$isRoundTrip) {
+            $finalPrice = $chuyenBay->price * $classMultiplier * $passengerCount;
+        } else {
+            $roundTripFactor = 1.95;
+
+            if ($rawClass === 'pho_thong_dac_biet') {
+                $roundTripFactor = 1.90;
+            } elseif ($rawClass === 'thuong_gia') {
+                $roundTripFactor = 1.85;
+            }
+
+            $finalPrice = $chuyenBay->price * $classMultiplier * $roundTripFactor * $passengerCount;
+        }
+
+        $isSoldOut = false;
+
+        if ($rawClass === 'thuong_gia' || $rawClass === 'pho_thong_dac_biet') {
+            $bookedForThisClass = \App\Models\Booking::where('flight_id', $chuyenBay->id)
+                ->where('flight_class', $rawClass)
+                ->get()
+                ->sum(function($bk) {
+                    return $bk->passenger_count;
+                });
+
+            if (($bookedForThisClass + $passengerCount) > 10) {
+                $isSoldOut = true;
+            }
+        }
+
+        $classMap = [
+            'pho_thong' => 'Phổ thông',
+            'pho_thong_dac_biet' => 'Phổ thông đặc biệt',
+            'thuong_gia' => 'Thương gia',
+            'hang_nhat' => 'Hạng nhất',
+        ];
+
+        $displayClass = $classMap[$rawClass] ?? ucwords(str_replace(['_', '-'], ' ', $rawClass));
+    @endphp
+
+    <div class="price-label">Giá vé dự kiến</div>
+
+    <div class="price">
+        {{ number_format($finalPrice, 0, ',', '.') }} đ
+    </div>
+
+    <div class="mb-2" style="font-size: 13px;">
+        <span class="badge bg-info text-dark">
+            {{ $displayClass }}
+        </span>
+
+        <span class="text-muted ms-1">,</span>
+
+        <span class="badge bg-secondary ms-1">
+            {{ $isRoundTrip ? 'Khứ hồi' : 'Một chiều' }}
+        </span>
+    </div>
+
+    @if($isSoldOut)
+        <button class="btn btn-secondary btn-sm mt-1 w-100"
+                disabled
+                style="padding: 8px 18px; border-radius: 6px; font-weight: bold; cursor: not-allowed;">
+            Hết vé khoang này
+        </button>
+    @else
+        <a href="{{ route('booking.create', [
+            'flight_id' => $chuyenBay->id,
+            'trip_type' => $rawTrip,
+            'loai_chuyen' => $rawTrip,
+            'flight_class' => $rawClass,
+            'hang_ve' => $rawClass,
+            'passenger_count' => $passengerCount,
+            'ngay_ve' => $ngayVe
+        ]) }}"
+           class="btn btn-primary btn-sm mt-1 w-100"
+           style="background: #1455a3; color: white; padding: 8px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">
+            Đặt vé
+        </a>
+    @endif
+
+</div>
                     </div>
 
                     <div class="price-unit">

@@ -11,6 +11,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AdminAirportController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\AdminFlightController;
 
 // Trang chu
 Route::get('/', function () {
@@ -116,5 +117,8 @@ Route::middleware(['role:admin'])
     ->name('admin.')
     ->group(function () {
         Route::resource('airports', AdminAirportController::class)
+            ->except(['show']);
+
+        Route::resource('flights', AdminFlightController::class)
             ->except(['show']);
     });
