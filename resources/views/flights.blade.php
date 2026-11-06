@@ -193,24 +193,24 @@
                         @php
                             $rawTrip = request('loai_chuyen', request('trip_type', 'mot_chieu'));
                             $rawClass = request('hang_ve', request('flight_class', 'pho_thong'));
-                            
+
                             // Lấy số lượng hành khách từ Controller truyền sang hoặc lấy từ request('hanh_khach')
                             $passengerCount = $passengerCount ?? request('hanh_khach', 1);
-                            
+
                             // 1. Hệ số hạng vé (Class Multiplier)
                             $classMultiplier = 1.0;
                             switch ($rawClass) {
-                                case 'pho_thong': 
-                                    $classMultiplier = 1.0; 
+                                case 'pho_thong':
+                                    $classMultiplier = 1.0;
                                     break;
-                                case 'pho_thong_dac_biet': 
-                                    $classMultiplier = 1.4; 
+                                case 'pho_thong_dac_biet':
+                                    $classMultiplier = 1.4;
                                     break;
-                                case 'thuong_gia': 
-                                    $classMultiplier = 2.2; 
+                                case 'thuong_gia':
+                                    $classMultiplier = 2.2;
                                     break;
-                                default: 
-                                    $classMultiplier = 1.0; 
+                                default:
+                                    $classMultiplier = 1.0;
                                     break;
                             }
 
@@ -243,7 +243,7 @@
                                     });
 
                                 if (($bookedForThisClass + $passengerCount) > 10) {
-                                    $isSoldOut = true; 
+                                    $isSoldOut = true;
                                 }
                             }
                         @endphp
@@ -252,7 +252,7 @@
                         <div class="price mb-1 fw-bold fs-5 text-danger">
                             {{ number_format($finalPrice, 0, ',', '.') }} đ
                         </div>
-                        
+
                         <!-- Badge hạng vé và loại vé -->
                         <div class="mb-2" style="font-size: 13px;">
                             <span class="badge bg-info text-dark">
@@ -267,7 +267,7 @@
                                 @endphp
                                 {{ $displayClass }}
                             </span>
-                            
+
                             <span class="text-muted ms-1">,</span>
 
                             <span class="badge bg-secondary ms-1">
@@ -282,9 +282,9 @@
                             </button>
                         @else
                             <a href="{{ route('booking.create', [
-                                'flight_id' => $chuyenBay->id, 
-                                'trip_type' => $rawTrip, 
-                                'loai_chuyen' => $rawTrip, 
+                                'flight_id' => $chuyenBay->id,
+                                'trip_type' => $rawTrip,
+                                'loai_chuyen' => $rawTrip,
                                 'flight_class' => $rawClass,
                                 'hang_ve' => $rawClass,
                                 'passenger_count' => $passengerCount,
