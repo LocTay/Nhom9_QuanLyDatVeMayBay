@@ -338,11 +338,17 @@
 
 <body>
     <aside class="sidebar">
-        <a href="/" class="brand">Sky<span>Booking</span></a>
+        <a href="{{ route('admin.dashboard') }}" class="brand">
+            Sky<span>Booking</span>
+        </a>
 
         <div class="nav-caption">Điều hướng chính</div>
 
-        <a href="/" class="side-link">⌂ &nbsp; Trang chủ</a>
+        <a href="{{ route('admin.dashboard') }}"
+            class="side-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+            ⌂ &nbsp; Trang chủ Admin
+        </a>
+
         <a href="{{ route('flights.search') }}" class="side-link">✈ &nbsp; Tìm chuyến bay</a>
         <a href="{{ route('ticket.lookup.form') }}" class="side-link">▤ &nbsp; Tra cứu vé</a>
         <a href="{{ route('profile.index') }}" class="side-link">♙ &nbsp; Tài khoản của tôi</a>
@@ -374,7 +380,7 @@
                 <strong>@yield('topbar-title', View::yieldContent('title', 'Quản trị hệ thống'))</strong>
             </div>
 
-            <a href="/">← Trở về trang chủ</a>
+            <a href="{{ route('admin.dashboard') }}">← Về trang chủ Admin</a>
         </header>
 
         <section class="content">

@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 
+use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminRefundController;
 use App\Http\Controllers\FlightController;
 use App\Http\Controllers\BookingController;
@@ -139,6 +140,9 @@ Route::middleware(['role:admin'])
 
         Route::post('/refunds/{booking}/complete', [AdminRefundController::class, 'complete'])
             ->name('refunds.complete');
+
+        Route::get('/dashboard', [AdminDashboardController::class, 'index'])
+            ->name('dashboard');
     });
 // 1. Trang giao diện thanh toán QR
 Route::get('/ve/{booking_code}/thanh-toan', [PaymentController::class, 'showPaymentPage'])->name('ticket.payment.page');
