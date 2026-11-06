@@ -28,13 +28,18 @@ class Booking extends Model
     'flight_class',
     'payment_method',
     'payment_time',
+    'payment_confirmed_at',
+'approval_expires_at',
     'refund_status',
     'cancellation_reason',
 ];
 
     protected $casts = [
-        'passengers_data' => 'array',
-    ];
+    'passengers_data' => 'array',
+    'payment_time' => 'datetime',
+    'payment_confirmed_at' => 'datetime',
+    'approval_expires_at' => 'datetime',
+];
 
     protected static function booted(): void
     {

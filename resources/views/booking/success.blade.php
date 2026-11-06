@@ -60,8 +60,8 @@
                         <div class="mb-2">
                             <i class="bi bi-check-circle-fill display-4 text-white"></i>
                         </div>
-                        <h3 class="fw-bold mb-1">ĐẶT VÉ THÀNH CÔNG!</h3>
-                        <p class="mb-0 opacity-75">Quý khách vui lòng lưu hoặc chụp màn hình thông tin vé bên dưới</p>
+                        <h3 class="fw-bold mb-1">Vé đặt chỗ đang được giữ chờ thanh toán</h3>
+                        <p class="mb-0 opacity-75">Quý khách vui lòng chuyển qua trang thanh toán </p>
                     </div>
 
                     <div class="card-body p-4 p-md-5">
@@ -229,12 +229,15 @@
                         <div class="d-grid gap-2 d-md-flex justify-content-md-center">
                             <a href="{{ auth()->check() && auth()->user()->role === 'admin'
     ? route('admin.dashboard')
-    : url('/') }}" class="back">
-                                ← Quay lại trang chủ
+    : url('/') }}"
+                                class="btn btn-outline-secondary px-4 py-2">
+
+                                <i class="bi bi-house-door me-1"></i>
+                                Về trang chủ
                             </a>
-                            <button onclick="window.print()" class="btn btn-primary px-4 py-2">
-                                <i class="bi bi-printer me-1"></i> In / Tải vé
-                            </button>
+                            <a href="{{ route('ticket.detail', $booking->booking_code) }}" class="btn btn-primary px-4 py-2 btn-action">
+                                <i class="fas fa-credit-card me-1"></i> Thanh toán vé ngay
+                            </a>
                         </div>
 
                     </div>

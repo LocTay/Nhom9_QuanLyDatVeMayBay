@@ -7,7 +7,6 @@ use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminRefundController;
 use App\Http\Controllers\FlightController;
 use App\Http\Controllers\BookingController;
-
 use App\Http\Controllers\AdminInvoiceController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\AuthController;
@@ -16,7 +15,7 @@ use App\Http\Controllers\AdminAirportController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\AdminFlightController;
 
-// Trang chu
+// Trang chủ
 Route::get('/', function () {
     $sanBays = DB::table('airports')
         ->orderBy('city')
@@ -24,18 +23,19 @@ Route::get('/', function () {
 
     return view('home', compact('sanBays'));
 });
-// Trang lien he
+
+// Trang liên hệ
 Route::get('/lien-he', [ContactController::class, 'index'])
     ->name('contact');
 
-// Xu ly gui thong tin lien he
 Route::post('/lien-he', [ContactController::class, 'send'])
     ->name('contact.send');
+
 // Tìm kiếm chuyến bay
 Route::get('/flights', [FlightController::class, 'index'])
     ->name('flights.search');
 
-// BỔ SUNG CÁC ROUTE ĐẶT VÉ CỦA THÀNH VIÊN 2
+// Đặt vé
 Route::get('/booking/create/{flight_id}', [BookingController::class, 'create'])
     ->name('booking.create');
 
@@ -45,15 +45,14 @@ Route::post('/booking/store', [BookingController::class, 'store'])
 Route::get('/booking/success/{id}', [BookingController::class, 'success'])
     ->name('booking.success');
 
-
-// Dang ky
+// Đăng ký
 Route::get('/register', [AuthController::class, 'showRegister'])
     ->name('register');
 
 Route::post('/register', [AuthController::class, 'register'])
     ->name('register.submit');
 
-// Dang nhap
+// Đăng nhập
 Route::get('/login', [AuthController::class, 'showLogin'])
     ->name('login');
 
@@ -63,48 +62,47 @@ Route::post('/login', [AuthController::class, 'login'])
 Route::post('/logout', [AuthController::class, 'logout'])
     ->name('logout');
 
-// Quen mat khau
+// Quên mật khẩu
 Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])
     ->name('password.request');
 
 Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])
     ->name('password.email');
 
-// Dat lai mat khau
+// Đặt lại mật khẩu
 Route::get('/reset-password/{token}', [AuthController::class, 'showResetPassword'])
     ->name('password.reset');
 
 Route::post('/reset-password', [AuthController::class, 'resetPassword'])
     ->name('password.update');
 
-// Tra cuu ve
+// Tra cứu vé
 Route::get('/tra-cuu-ve', [PaymentController::class, 'showLookupForm'])
     ->name('ticket.lookup.form');
 
 Route::post('/tra-cuu-ve', [PaymentController::class, 'lookup'])
     ->name('ticket.lookup');
 
-
-
-// xem lich su dat ve
+// Lịch sử đặt vé
 Route::middleware(['auth'])->group(function () {
-    Route::get('/lich-su-dat-ve', [PaymentController::class, 'history'])->name('ticket.history');
+    Route::get('/lich-su-dat-ve', [PaymentController::class, 'history'])
+        ->name('ticket.history');
 });
 
-// Xem chi tiet ve
+// Chi tiết vé
 Route::get('/ve/{booking_code}', [PaymentController::class, 'showDetail'])
     ->name('ticket.detail');
 
-// Thanh toan
+// Thanh toán
 Route::post('/ve/{booking_code}/thanh-toan', [PaymentController::class, 'processPayment'])
     ->name('ticket.payment');
 
-// Huy ve
+// Hủy vé
 Route::post('/ve/{booking_code}/huy', [PaymentController::class, 'cancelTicket'])
     ->name('ticket.cancel');
 
-// Thong tin tai khoan
-Route::middleware('auth')->group(function () {
+// Thông tin tài khoản
+Route::middleware(['auth'])->group(function () {
     Route::get('/tai-khoan', [ProfileController::class, 'index'])
         ->name('profile.index');
 
@@ -114,17 +112,20 @@ Route::middleware('auth')->group(function () {
     Route::put('/tai-khoan', [ProfileController::class, 'update'])
         ->name('profile.update');
 });
-// Quan ly san bay - chi Admin
+
+// Quản lý sân bay, chuyến bay, hóa đơn và hoàn tiền - chỉ Admin
 Route::middleware(['role:admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
+
         Route::resource('airports', AdminAirportController::class)
             ->except(['show']);
 
         Route::resource('flights', AdminFlightController::class)
             ->except(['show']);
 
+        // Quản lý hóa đơn
         Route::get('/invoices', [AdminInvoiceController::class, 'index'])
             ->name('invoices.index');
 
@@ -141,14 +142,23 @@ Route::middleware(['role:admin'])
         Route::post('/refunds/{booking}/complete', [AdminRefundController::class, 'complete'])
             ->name('refunds.complete');
 
+        // Dashboard Admin
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])
             ->name('dashboard');
+
+        // Duyệt thanh toán chuyển khoản
+        Route::post('/ve/{booking_code}/duyet-thanh-toan', [PaymentController::class, 'adminApprovePayment'])
+            ->name('ticket.approve');
+
+        // Hủy đơn đang chờ Admin duyệt
+        Route::post('/ve/{booking_code}/huy-cho-duyet', [PaymentController::class, 'adminCancelPendingApproval'])
+            ->name('ticket.cancel-pending');
     });
-// 1. Trang giao diện thanh toán QR
-Route::get('/ve/{booking_code}/thanh-toan', [PaymentController::class, 'showPaymentPage'])->name('ticket.payment.page');
 
-// 2. Khách hàng gửi yêu cầu "Xác nhận chuyển khoản"
-Route::post('/ve/{booking_code}/xac-nhan-chuyen-khoan', [PaymentController::class, 'submitTransfer'])->name('ticket.payment.submit');
+// Trang thanh toán QR
+Route::get('/ve/{booking_code}/thanh-toan', [PaymentController::class, 'showPaymentPage'])
+    ->name('ticket.payment.page');
 
-// 3. Admin duyệt thanh toán (Mô phỏng)
-Route::post('/admin/ve/{booking_code}/duyet-thanh-toan', [PaymentController::class, 'adminApprovePayment'])->name('admin.ticket.approve');
+// Khách hàng xác nhận chuyển khoản
+Route::post('/ve/{booking_code}/xac-nhan-chuyen-khoan', [PaymentController::class, 'submitTransfer'])
+    ->name('ticket.payment.submit');

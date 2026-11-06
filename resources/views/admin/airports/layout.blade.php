@@ -445,6 +445,12 @@
             line-height: 1.7;
         }
 
+        .alert-warning {
+            color: #92400e;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+        }
+
         .alert-success {
             color: #176b42;
             background: #e8f6ee;
@@ -1150,6 +1156,11 @@
         .finance-badge-pending_refund {
             background: #fff4dc;
             color: #a76c08;
+        }
+
+        .finance-badge-pending_approval {
+            background: #e8f1ff;
+            color: #2563eb;
         }
 
         .finance-badge-paid,

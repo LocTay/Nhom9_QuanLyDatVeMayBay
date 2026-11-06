@@ -5,13 +5,14 @@
 
 @section('content')
 @php
-    $statusLabels = [
-        'pending' => 'Chờ thanh toán',
-        'paid' => 'Đã thanh toán',
-        'failed' => 'Thất bại',
-        'cancelled' => 'Đã hủy',
-        'refund_pending' => 'Chờ hoàn tiền',
-    ];
+$statusLabels = [
+'pending' => 'Chờ thanh toán',
+'pending_approval' => 'Chờ Admin duyệt',
+'paid' => 'Đã thanh toán',
+'failed' => 'Thất bại',
+'cancelled' => 'Đã hủy',
+'refund_pending' => 'Chờ hoàn tiền',
+];
 @endphp
 
 <div class="page-heading">
@@ -22,6 +23,17 @@
         và doanh thu của hệ thống SkyBooking.
     </p>
 </div>
+
+@if($pendingApprovalBookings > 0)
+<div class="alert alert-warning" style="margin-bottom:20px;">
+    <strong>
+        Có {{ $pendingApprovalBookings }} đơn đang chờ duyệt thanh toán!
+    </strong>
+    <p style="margin-top:8px;">
+        Vui lòng kiểm tra và xử lý trước khi hết thời hạn 2 phút.
+    </p>
+</div>
+@endif
 
 <div class="finance-stats">
     <div class="finance-stat">
@@ -47,6 +59,19 @@
         </div>
         <div class="finance-stat-note">Đơn đang chờ xử lý</div>
     </div>
+    <div class="finance-stat">
+        <div class="finance-stat-label">
+            Chờ duyệt thanh toán
+        </div>
+
+        <div class="finance-stat-value">
+            {{ number_format($pendingApprovalBookings) }}
+        </div>
+
+        <div class="finance-stat-note">
+            Đơn đang chờ Admin xác nhận
+        </div>
+    </div>
 
     <div class="finance-stat">
         <div class="finance-stat-label">
@@ -70,8 +95,8 @@
     </div>
 
     <form method="GET"
-          action="{{ route('admin.invoices.index') }}"
-          class="finance-filters">
+        action="{{ route('admin.invoices.index') }}"
+        class="finance-filters">
 
         <div class="finance-field">
             <label for="invoice-search">Mã đặt vé, tên hoặc email</label>
@@ -80,8 +105,7 @@
                 type="text"
                 name="search"
                 value="{{ request('search') }}"
-                placeholder="Nhập mã đặt vé hoặc thông tin khách hàng"
-            >
+                placeholder="Nhập mã đặt vé hoặc thông tin khách hàng">
         </div>
 
         <div class="finance-field">
@@ -89,10 +113,10 @@
             <select id="invoice-status" name="status">
                 <option value="">Tất cả trạng thái</option>
                 @foreach ($statusLabels as $value => $label)
-                    <option value="{{ $value }}"
-                        @selected(request('status') === $value)>
-                        {{ $label }}
-                    </option>
+                <option value="{{ $value }}"
+                    @selected(request('status')===$value)>
+                    {{ $label }}
+                </option>
                 @endforeach
             </select>
         </div>
@@ -102,7 +126,7 @@
                 Tìm kiếm
             </button>
             <a href="{{ route('admin.invoices.index') }}"
-               class="btn btn-secondary">
+                class="btn btn-secondary">
                 Đặt lại
             </a>
         </div>
@@ -136,64 +160,64 @@
 
             <tbody>
                 @forelse ($bookings as $booking)
-                    <tr>
-                        <td>
-                            <span class="finance-code">
-                                {{ $booking->pnr_code ?: $booking->booking_code }}
-                            </span>
-                        </td>
+                <tr>
+                    <td>
+                        <span class="finance-code">
+                            {{ $booking->pnr_code ?: $booking->booking_code }}
+                        </span>
+                    </td>
 
-                        <td>
-                            <span class="finance-person">
-                                {{ $booking->passenger_name }}
-                            </span>
-                            <span class="finance-subtext">
-                                {{ $booking->passenger_email }}
-                            </span>
-                        </td>
+                    <td>
+                        <span class="finance-person">
+                            {{ $booking->passenger_name }}
+                        </span>
+                        <span class="finance-subtext">
+                            {{ $booking->passenger_email }}
+                        </span>
+                    </td>
 
-                        <td>
-                            {{ $booking->flight?->flight_number ?? 'Không xác định' }}
-                        </td>
+                    <td>
+                        {{ $booking->flight?->flight_number ?? 'Không xác định' }}
+                    </td>
 
-                        <td>
-                            {{ $booking->passenger_count ?? $booking->number_of_seats }}
-                        </td>
+                    <td>
+                        {{ $booking->passenger_count ?? $booking->number_of_seats }}
+                    </td>
 
-                        <td>
-                            <span class="finance-amount">
-                                {{ number_format($booking->total_price, 0, ',', '.') }} đ
-                            </span>
-                        </td>
+                    <td>
+                        <span class="finance-amount">
+                            {{ number_format($booking->total_price, 0, ',', '.') }} đ
+                        </span>
+                    </td>
 
-                        <td>
-                            <span class="finance-badge finance-badge-{{ $booking->status }}">
-                                {{ $statusLabels[$booking->status] ?? $booking->status }}
-                            </span>
-                        </td>
+                    <td>
+                        <span class="finance-badge finance-badge-{{ $booking->status }}">
+                            {{ $statusLabels[$booking->status] ?? $booking->status }}
+                        </span>
+                    </td>
 
-                        <td>
-                            <a href="{{ route('admin.invoices.show', $booking->id) }}"
-                               class="btn btn-primary">
-                                Chi tiết
-                            </a>
-                        </td>
-                    </tr>
+                    <td>
+                        <a href="{{ route('admin.invoices.show', $booking->id) }}"
+                            class="btn btn-primary">
+                            Chi tiết
+                        </a>
+                    </td>
+                </tr>
                 @empty
-                    <tr>
-                        <td colspan="7" class="finance-empty">
-                            Không tìm thấy hóa đơn phù hợp.
-                        </td>
-                    </tr>
+                <tr>
+                    <td colspan="7" class="finance-empty">
+                        Không tìm thấy hóa đơn phù hợp.
+                    </td>
+                </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 
     @if ($bookings->hasPages())
-        <div class="finance-pagination">
-            {{ $bookings->withQueryString()->links() }}
-        </div>
+    <div class="finance-pagination">
+        {{ $bookings->withQueryString()->links() }}
+    </div>
     @endif
 </div>
 @endsection

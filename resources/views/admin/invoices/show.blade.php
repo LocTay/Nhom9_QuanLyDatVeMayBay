@@ -5,32 +5,67 @@
 
 @section('content')
 @php
-    $code = $booking->pnr_code ?: $booking->booking_code;
+$code = $booking->pnr_code ?: $booking->booking_code;
 
-    $statusLabels = [
-        'pending' => 'Chờ thanh toán',
-        'paid' => 'Đã thanh toán',
-        'failed' => 'Thanh toán thất bại',
-        'cancelled' => 'Đã hủy',
-        'refund_pending' => 'Chờ hoàn tiền',
-    ];
+$statusLabels = [
+'pending' => 'Chờ thanh toán',
+'pending_approval' => 'Chờ Admin duyệt',
+'paid' => 'Đã thanh toán',
+'failed' => 'Thanh toán thất bại',
+'cancelled' => 'Đã hủy',
+'refund_pending' => 'Chờ hoàn tiền',
+];
 
-    $classLabels = [
-        'pho_thong' => 'Phổ thông',
-        'pho_thong_dac_biet' => 'Phổ thông đặc biệt',
-        'thuong_gia' => 'Thương gia',
-    ];
+$classLabels = [
+'pho_thong' => 'Phổ thông',
+'pho_thong_dac_biet' => 'Phổ thông đặc biệt',
+'thuong_gia' => 'Thương gia',
+];
 
-    $refundLabels = [
-        'pending_refund' => 'Đang chờ hoàn tiền',
-        'no_refund' => 'Không hoàn tiền',
-        'completed' => 'Đã hoàn tiền',
-    ];
+$refundLabels = [
+'pending_refund' => 'Đang chờ hoàn tiền',
+'no_refund' => 'Không hoàn tiền',
+'completed' => 'Đã hoàn tiền',
+];
 
-    $passengers = $booking->passengers_data ?? [];
+$passengers = $booking->passengers_data ?? [];
 @endphp
 
 <style>
+    .approval-warning {
+        border: 1px solid #f59e0b;
+        background: #fffbeb;
+    }
+
+    .approval-warning h2 {
+        color: #92400e;
+    }
+
+    .approval-warning p {
+        color: #78350f;
+        line-height: 1.7;
+        font-size: 12px;
+    }
+
+    .approval-deadline {
+        color: #b91c1c;
+        font-weight: 800;
+    }
+
+    .approval-danger-button {
+        padding: 11px 17px;
+        border: 1px solid #dc2626;
+        border-radius: 8px;
+        background: #dc2626;
+        color: white;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .approval-danger-button:hover {
+        background: #b91c1c;
+    }
+
     @media print {
         @page {
             size: A4;
@@ -47,7 +82,8 @@
 
         .sidebar,
         .topbar,
-        .finance-actions {
+        .finance-actions,
+        .approval-warning {
             display: none !important;
         }
 
@@ -198,18 +234,18 @@
             </thead>
             <tbody>
                 @forelse ($passengers as $index => $passenger)
-                    <tr>
-                        <td>{{ $index + 1 }}</td>
-                        <td>{{ $passenger['name'] ?? 'Chưa có' }}</td>
-                        <td>{{ $passenger['gender'] ?? 'Chưa có' }}</td>
-                        <td>{{ $passenger['seat'] ?? 'Chưa chọn' }}</td>
-                    </tr>
+                <tr>
+                    <td>{{ $index + 1 }}</td>
+                    <td>{{ $passenger['name'] ?? 'Chưa có' }}</td>
+                    <td>{{ $passenger['gender'] ?? 'Chưa có' }}</td>
+                    <td>{{ $passenger['seat'] ?? 'Chưa chọn' }}</td>
+                </tr>
                 @empty
-                    <tr>
-                        <td colspan="4" class="finance-empty">
-                            Đơn đặt vé cũ chưa lưu danh sách hành khách chi tiết.
-                        </td>
-                    </tr>
+                <tr>
+                    <td colspan="4" class="finance-empty">
+                        Đơn đặt vé cũ chưa lưu danh sách hành khách chi tiết.
+                    </td>
+                </tr>
                 @endforelse
             </tbody>
         </table>
@@ -234,31 +270,77 @@
     </div>
 
     @if ($booking->refund_status)
-        <div class="finance-detail-row">
-            <span>Trạng thái hoàn tiền</span>
-            <strong>
-                {{ $refundLabels[$booking->refund_status] ?? $booking->refund_status }}
-            </strong>
-        </div>
+    <div class="finance-detail-row">
+        <span>Trạng thái hoàn tiền</span>
+        <strong>
+            {{ $refundLabels[$booking->refund_status] ?? $booking->refund_status }}
+        </strong>
+    </div>
     @endif
 
     @if ($booking->cancellation_reason)
-        <div class="finance-detail-row">
-            <span>Lý do hủy</span>
-            <strong>{{ $booking->cancellation_reason }}</strong>
-        </div>
+    <div class="finance-detail-row">
+        <span>Lý do hủy</span>
+        <strong>{{ $booking->cancellation_reason }}</strong>
+    </div>
     @endif
 </div>
 
+{{-- Xử lý yêu cầu duyệt thanh toán --}}
+@if($booking->status === 'pending_approval')
+<div class="finance-detail-card approval-warning">
+    <h2>Yêu cầu duyệt thanh toán</h2>
+
+    <p>
+        Khách hàng đã xác nhận chuyển khoản.
+        Admin cần kiểm tra giao dịch và xử lý đơn
+        trong vòng 2 phút kể từ thời điểm khách xác nhận.
+    </p>
+
+    @if($booking->approval_expires_at)
+    <p style="margin-top:12px;">
+        Hạn xử lý:
+        <strong class="approval-deadline">
+            {{ $booking->approval_expires_at->format('d/m/Y H:i:s') }}
+        </strong>
+    </p>
+    @endif
+
+    <div class="finance-actions">
+        <form
+            action="{{ route('admin.ticket.approve', $booking->booking_code) }}"
+            method="POST"
+            onsubmit="return confirm('Bạn xác nhận đã kiểm tra giao dịch và duyệt thanh toán cho đơn này?')">
+            @csrf
+
+            <button type="submit" class="btn btn-primary">
+                Duyệt thanh toán
+            </button>
+        </form>
+
+        <form
+            action="{{ route('admin.ticket.cancel-pending', $booking->booking_code) }}"
+            method="POST"
+            onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn chờ duyệt này? Số ghế sẽ được hoàn lại.')">
+            @csrf
+
+            <button type="submit" class="approval-danger-button">
+                Hủy đơn
+            </button>
+        </form>
+    </div>
+</div>
+@endif
+
 <div class="finance-actions">
     <a href="{{ route('admin.invoices.index') }}"
-       class="btn btn-secondary">
+        class="btn btn-secondary">
         ← Quay lại danh sách
     </a>
 
     <button type="button"
-            class="btn btn-gold"
-            onclick="window.print()">
+        class="btn btn-gold"
+        onclick="window.print()">
         In hóa đơn
     </button>
 </div>
