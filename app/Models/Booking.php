@@ -10,6 +10,7 @@ class Booking extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'pnr_code',
         'booking_code',
         'flight_id',
@@ -22,8 +23,8 @@ class Booking extends Model
         'passengers_data',
         'total_price',
         'status',
-        'trip_type',     
-        'flight_class',  
+        'trip_type',
+        'flight_class',
     ];
   protected $table = 'bookings';
 
@@ -31,6 +32,21 @@ class Booking extends Model
         'passengers_data' => 'array', // Tự động decode dữ liệu JSON hành khách
         'payment_time' => 'datetime',
     ];
+
+
+    protected static function booted(): void
+    {
+        static::creating(function (Booking $booking) {
+            if ($booking->pnr_code && !$booking->booking_code) {
+                $booking->booking_code = $booking->pnr_code;
+            }
+
+            if ($booking->passenger_count !== null) {
+                $booking->number_of_seats = $booking->passenger_count;
+            }
+        });
+    }
+
 
     public function flight()
     {

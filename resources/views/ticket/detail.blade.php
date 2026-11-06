@@ -110,7 +110,7 @@
             <div class="row align-items-center">
                 <div class="col-md-7">
                     <div class="booking-label">BOOKING CODE / MÃ ĐẶT CHỖ</div>
-                    <div class="booking-code">{{ $booking->booking_code }}</div>
+                    <div class="booking-code">{{ $booking->pnr_code }}</div>
                     <div class="small text-white-50 mt-2">
                         <i class="fas fa-plane me-1"></i> SKY TRAVEL E-TICKET
                     </div>

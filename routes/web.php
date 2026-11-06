@@ -6,10 +6,13 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\FlightController;
 use App\Http\Controllers\BookingController; // Thêm dòng gọi Controller đặt vé
 
+use App\Http\Controllers\AdminInvoiceController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AdminAirportController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\AdminFlightController;
 
 // Trang chu
 Route::get('/', function () {
@@ -19,7 +22,13 @@ Route::get('/', function () {
 
     return view('home', compact('sanBays'));
 });
+// Trang lien he
+Route::get('/lien-he', [ContactController::class, 'index'])
+    ->name('contact');
 
+// Xu ly gui thong tin lien he
+Route::post('/lien-he', [ContactController::class, 'send'])
+    ->name('contact.send');
 // Tìm kiếm chuyến bay
 Route::get('/flights', [FlightController::class, 'index'])
     ->name('flights.search');
@@ -33,8 +42,7 @@ Route::post('/booking/store', [BookingController::class, 'store'])
 
 Route::get('/booking/success/{id}', [BookingController::class, 'success'])
     ->name('booking.success');
-Route::get('/flights', [FlightController::class, 'index'])
-    ->name('flights.search');
+
 
 // Dang ky
 Route::get('/register', [AuthController::class, 'showRegister'])
@@ -111,6 +119,15 @@ Route::middleware(['role:admin'])
     ->group(function () {
         Route::resource('airports', AdminAirportController::class)
             ->except(['show']);
+
+        Route::resource('flights', AdminFlightController::class)
+            ->except(['show']);
+
+        Route::get('/invoices', [AdminInvoiceController::class, 'index'])
+            ->name('invoices.index');
+
+        Route::get('/invoices/{booking}', [AdminInvoiceController::class, 'show'])
+            ->name('invoices.show');
     });
 // 1. Trang giao diện thanh toán QR
 Route::get('/ve/{booking_code}/thanh-toan', [PaymentController::class, 'showPaymentPage'])->name('ticket.payment.page');

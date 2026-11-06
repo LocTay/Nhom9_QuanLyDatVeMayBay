@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -47,7 +48,7 @@
             font-size: 21px;
             font-weight: bold;
             padding: 0 8px 25px;
-            border-bottom: 1px solid rgba(255,255,255,.14);
+            border-bottom: 1px solid rgba(255, 255, 255, .14);
         }
 
         .brand span {
@@ -74,7 +75,7 @@
 
         .side-link:hover,
         .side-link.active {
-            background: rgba(255,255,255,.10);
+            background: rgba(255, 255, 255, .10);
             color: white;
             border-left: 3px solid var(--gold);
         }
@@ -147,7 +148,7 @@
             background: white;
             border: 1px solid var(--border);
             border-radius: 14px;
-            box-shadow: 0 8px 25px rgba(6,38,75,.05);
+            box-shadow: 0 8px 25px rgba(6, 38, 75, .05);
         }
 
         .panel-header {
@@ -209,7 +210,8 @@
             font-size: 13px;
         }
 
-        th, td {
+        th,
+        td {
             padding: 14px 12px;
             border-bottom: 1px solid var(--border);
             text-align: left;
@@ -271,7 +273,8 @@
             font-weight: bold;
         }
 
-        .form-group input {
+        .form-group input,
+        .form-group select {
             width: 100%;
             padding: 12px 13px;
             border: 1px solid var(--border);
@@ -280,9 +283,10 @@
             font-size: 13px;
         }
 
-        .form-group input:focus {
+        .form-group input:focus,
+        .form-group select:focus {
             border-color: #4d83b8;
-            box-shadow: 0 0 0 3px rgba(77,131,184,.1);
+            box-shadow: 0 0 0 3px rgba(77, 131, 184, .1);
         }
 
         .field-error {
@@ -331,6 +335,7 @@
         }
     </style>
 </head>
+
 <body>
     <aside class="sidebar">
         <a href="/" class="brand">Sky<span>Booking</span></a>
@@ -341,7 +346,20 @@
         <a href="{{ route('flights.search') }}" class="side-link">✈ &nbsp; Tìm chuyến bay</a>
         <a href="{{ route('ticket.lookup.form') }}" class="side-link">▤ &nbsp; Tra cứu vé</a>
         <a href="{{ route('profile.index') }}" class="side-link">♙ &nbsp; Tài khoản của tôi</a>
-        <a href="{{ route('admin.airports.index') }}" class="side-link active">✧ &nbsp; Quản lý sân bay</a>
+        <a href="{{ route('admin.airports.index') }}"
+            class="side-link {{ request()->routeIs('admin.airports.*') ? 'active' : '' }}">
+            ✧ &nbsp; Quản lý sân bay
+        </a>
+
+        <a href="{{ route('admin.flights.index') }}"
+            class="side-link {{ request()->routeIs('admin.flights.*') ? 'active' : '' }}">
+            ✈ &nbsp; Quản lý chuyến bay
+        </a>
+
+        <a href="{{ route('admin.invoices.index') }}"
+            class="side-link {{ request()->routeIs('admin.invoices.*') ? 'active' : '' }}">
+            ▤ &nbsp; Quản lý hóa đơn
+        </a>
     </aside>
 
     <main class="main">
@@ -359,4 +377,5 @@
         </section>
     </main>
 </body>
+
 </html>
