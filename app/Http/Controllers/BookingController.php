@@ -65,18 +65,18 @@ class BookingController extends Controller
         // 3. Tính toán hệ số hạng vé và hệ số khứ hồi chuẩn xác khớp với trang tìm kiếm
         $classMultiplier = 1.0;
         switch ($flightClass) {
-            case 'pho_thong': 
-                $classMultiplier = 1.0; 
+            case 'pho_thong':
+                $classMultiplier = 1.0;
                 break;
-            case 'pho_thong_dac_biet': 
-                $classMultiplier = 1.4; 
+            case 'pho_thong_dac_biet':
+                $classMultiplier = 1.4;
                 break;
-            case 'thuong_gia': 
-            case 'Thương gia': 
-                $classMultiplier = 2.2; 
+            case 'thuong_gia':
+            case 'Thương gia':
+                $classMultiplier = 2.2;
                 break;
-            default: 
-                $classMultiplier = 1.0; 
+            default:
+                $classMultiplier = 1.0;
                 break;
         }
 
@@ -84,18 +84,18 @@ class BookingController extends Controller
         $tripFactor = 1.0;
         if ($isRoundTrip) {
             switch ($flightClass) {
-                case 'pho_thong': 
-                    $tripFactor = 1.95; 
+                case 'pho_thong':
+                    $tripFactor = 1.95;
                     break;
-                case 'pho_thong_dac_biet': 
-                    $tripFactor = 1.90; 
+                case 'pho_thong_dac_biet':
+                    $tripFactor = 1.90;
                     break;
-                case 'thuong_gia': 
-                case 'Thương gia': 
-                    $tripFactor = 1.85; 
+                case 'thuong_gia':
+                case 'Thương gia':
+                    $tripFactor = 1.85;
                     break;
-                default: 
-                    $tripFactor = 1.90; 
+                default:
+                    $tripFactor = 1.90;
                     break;
             }
         }
@@ -120,15 +120,15 @@ class BookingController extends Controller
         ];
 
         return view('booking.create', compact(
-            'flight', 
-            'tripType', 
-            'flightClass', 
-            'ngayVe', 
-            'bookedSeats', 
-            'remainingSeats', 
+            'flight',
+            'tripType',
+            'flightClass',
+            'ngayVe',
+            'bookedSeats',
+            'remainingSeats',
             'maxSeats',
-            'subTotal',          
-            'availableVouchers'  
+            'subTotal',
+            'availableVouchers'
         ));
     }
 
@@ -241,9 +241,15 @@ class BookingController extends Controller
 
         // Cả tạo booking và cập nhật số ghế đều nằm trong cùng transaction.
         $booking = DB::transaction(function () use (
-            $request, $validated, $passengerCount, $normalizedTripType,
-            $flightClass, $classMultiplier, $tripFactor,
-            $pnrCode, $passengersWithSeats
+            $request,
+            $validated,
+            $passengerCount,
+            $normalizedTripType,
+            $flightClass,
+            $classMultiplier,
+            $tripFactor,
+            $pnrCode,
+            $passengersWithSeats
         ) {
             $lockedFlight = Flight::whereKey($validated['flight_id'])
                 ->lockForUpdate()
@@ -255,46 +261,83 @@ class BookingController extends Controller
                 ]);
             }
 
-        // 3. Tính tổng tiền tạm tính (Subtotal) = Giá cơ bản * Hệ số hạng vé * Hệ số khứ hồi * Số lượng hành khách
-        $passengerCount = $request->passenger_count ?? 1;
-        $subTotal = $flight->price * $classMultiplier * $tripFactor * $passengerCount;
+            // Kiểm tra số ghế còn lại sau khi khóa chuyến bay
+            if ($lockedFlight->available_seats < $passengerCount) {
+                throw ValidationException::withMessages([
+                    'passenger_count' => 'Chuyến bay không còn đủ số ghế trống.',
+                ]);
+            }
 
-        // 4. Xử lý mã giảm giá dựa trên lựa chọn của khách và kiểm tra điều kiện an toàn
-        $discountAmount = 0;
-        $selectedVoucher = $request->input('selected_voucher');
+            // Kiểm tra lại ghế đã được đặt
+            $occupiedSeats = Booking::where('flight_id', $lockedFlight->id)
+                ->whereNotIn('status', ['cancelled', 'refund_pending'])
+                ->get()
+                ->flatMap(function ($existingBooking) {
+                    return collect($existingBooking->passengers_data ?? [])
+                        ->pluck('seat');
+                })
+                ->filter()
+                ->all();
 
-        if ($selectedVoucher === 'GIAMGIA10' && $subTotal >= 5000000) {
-            $discountAmount = $subTotal * 0.10;
-        } elseif ($selectedVoucher === 'GIAMGIA5' && $subTotal >= 2000000) {
-            $discountAmount = $subTotal * 0.05;
-        }
+            foreach ($passengersWithSeats as $passenger) {
+                if (
+                    !empty($passenger['seat']) &&
+                    in_array($passenger['seat'], $occupiedSeats, true)
+                ) {
+                    throw ValidationException::withMessages([
+                        'passenger_count' => 'Ghế vừa được người khác đặt. Vui lòng chọn lại.',
+                    ]);
+                }
+            }
 
-        // Tổng tiền cuối cùng sau khi đã trừ ưu đãi
-        $finalPrice = $subTotal - $discountAmount;
-        
-        // Trừ số lượng ghế tồn của chuyến bay trong database
-        $flight->decrement('available_seats', $request->passenger_count);
+            // Tính tổng tiền theo giá vé, hạng vé và loại chuyến
+            $subTotal = $lockedFlight->price
+                * $classMultiplier
+                * $tripFactor
+                * $passengerCount;
 
-        // Lưu vào database
-        $booking = Booking::create([
-            'user_id' => auth()->id(),  
-            'flight_id' => $request->flight_id,
-            'passenger_name' => $request->passenger_name,
-            'passenger_email' => $request->passenger_email,
-            'passenger_phone' => $request->passenger_phone,
-            'passenger_gender' => $request->passenger_gender,
-            'passenger_count' => $request->passenger_count,
-            'number_of_seats' => $request->passenger_count,
-            'trip_type' => $normalizedTripType, 
-            'flight_class' => $flightClass,
-            'booking_code' => $pnrCode,
-            'total_price' => $finalPrice, // Đổi từ $totalPrice thành $finalPrice cho khớp biến đã tính ở trên
-            'passengers_data' => $passengersWithSeats,
+            // Áp dụng mã giảm giá
+            $discountAmount = 0;
+            $selectedVoucher = $request->input('selected_voucher');
+
+            if ($selectedVoucher === 'GIAMGIA10' && $subTotal >= 5000000) {
+                $discountAmount = $subTotal * 0.10;
+            } elseif ($selectedVoucher === 'GIAMGIA5' && $subTotal >= 2000000) {
+                $discountAmount = $subTotal * 0.05;
+            }
+
+            $finalPrice = $subTotal - $discountAmount;
+
+            // Tạo booking trong transaction
+            $newBooking = Booking::create([
+                'user_id' => auth()->id(),
+                'flight_id' => $lockedFlight->id,
+                'passenger_name' => $request->passenger_name,
+                'passenger_email' => $request->passenger_email,
+                'passenger_phone' => $request->passenger_phone,
+                'passenger_gender' => $request->passenger_gender,
+                'passenger_count' => $passengerCount,
+                'number_of_seats' => $passengerCount,
+                'trip_type' => $normalizedTripType,
+                'flight_class' => $flightClass,
+                'pnr_code' => $pnrCode,
+                'booking_code' => $pnrCode,
+                'total_price' => $finalPrice,
+                'passengers_data' => $passengersWithSeats,
+            ]);
+
+            // Chỉ trừ ghế sau khi tạo booking thành công
+            $lockedFlight->decrement('available_seats', $passengerCount);
+
+            return $newBooking;
+        });
+
+        return redirect()->route('booking.success', [
+            'id' => $booking->id,
             'ngay_ve' => $request->input('ngay_ve'),
         ]);
-
-        return redirect()->route('booking.success', ['id' => $booking->id, 'ngay_ve' => $request->input('ngay_ve')]);
     }
+
 
     public function success($id)
     {
