@@ -52,6 +52,7 @@ class AuthController extends Controller
     }
 
     // Xử lý đăng nhập
+
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -66,6 +67,13 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
+            // Admin được chuyển đến trang quản trị riêng
+            if (Auth::user()->role === 'admin') {
+                return redirect()->route('admin.dashboard')
+                    ->with('success', 'Đăng nhập quản trị thành công!');
+            }
+
+            // Customer và Staff giữ nguyên trang chủ hiện tại
             return redirect('/')
                 ->with('success', 'Đăng nhập thành công!');
         }
@@ -155,7 +163,7 @@ class AuthController extends Controller
 
         return $status === Password::PASSWORD_RESET
             ? redirect()->route('login')
-                ->with('success', 'Đặt lại mật khẩu thành công! Hãy đăng nhập bằng mật khẩu mới.')
+            ->with('success', 'Đặt lại mật khẩu thành công! Hãy đăng nhập bằng mật khẩu mới.')
             : back()->withErrors([
                 'email' => 'Liên kết không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu liên kết mới.',
             ]);
