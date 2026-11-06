@@ -7,10 +7,10 @@ use App\Models\Flight;
 use App\Models\Booking;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class BookingController extends Controller
 {
-
     public function create(Request $request, $id)
     {
         $flight = Flight::findOrFail($id);
@@ -27,8 +27,11 @@ class BookingController extends Controller
         $flightClass = $request->query('flight_class', 'Phổ thông');
         $ngayVe = $request->query('ngay_ve');
 
-        // Lấy tất cả các booking của chuyến bay này để gom ghế đã đặt
-        $existingBookings = \App\Models\Booking::where('flight_id', $id)->get();
+        // Lấy các booking CHƯA HỦY của chuyến bay này để gom ghế đã đặt
+        $existingBookings = Booking::where('flight_id', $id)
+            ->where('status', '!=', 'cancelled') // <-- ĐÃ SỬA: Loại bỏ các vé đã hủy
+            ->get();
+
         $bookedSeats = [];
 
         foreach ($existingBookings as $booking) {
@@ -72,6 +75,7 @@ class BookingController extends Controller
 
         return view('booking.create', compact('flight', 'tripType', 'flightClass', 'ngayVe', 'bookedSeats', 'remainingSeats', 'maxSeats'));    
     }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -89,7 +93,6 @@ class BookingController extends Controller
 
         // Lấy thông tin chuyến bay và kiểm tra tổng số ghế trống còn lại của chuyến
         $flight = Flight::findOrFail($request->flight_id);
-        // Kiểm tra: Thời gian hiện tại cộng thêm 3 tiếng phải nhỏ hơn thời gian khởi hành của chuyến bay
         $departureTime = Carbon::parse($flight->departure_time);
 
         if (Carbon::now()->addHours(3)->greaterThan($departureTime)) {
@@ -137,17 +140,11 @@ class BookingController extends Controller
             $passengersInput[0]['gender'] = $request->passenger_gender;
         }
 
-        // Xác định tiền tố mã ghế theo hạng vé thực tế
-        $flightClass = $request->flight_class;
-        $prefix = 'C'; 
-        if ($flightClass === 'thuong_gia') {
-            $prefix = 'A';
-        } elseif ($flightClass === 'pho_thong_dac_biet') {
-            $prefix = 'B';
-        }
+        // 1. Quét toàn bộ các đơn hàng CHƯA HỦY của chuyến bay để gom ghế đã có người ngồi
+        $existingBookings = Booking::where('flight_id', $request->flight_id)
+            ->where('status', '!=', 'cancelled') // <-- ĐÃ SỬA: Loại bỏ các vé đã hủy
+            ->get();
 
-        // 1. Quét toàn bộ các đơn hàng đã đặt trước đó của chuyến bay này để gom các ghế đã có người ngồi
-        $existingBookings = Booking::where('flight_id', $request->flight_id)->get();
         $bookedSeats = [];
         foreach ($existingBookings as $bk) {
             if (!empty($bk->passengers_data) && is_array($bk->passengers_data)) {
@@ -183,6 +180,7 @@ class BookingController extends Controller
         $pnrCode = strtoupper(Str::random(6));
         
         // 1. Hệ số hạng vé (Class Multiplier)
+        $flightClass = $request->flight_class;
         $classMultiplier = 1.0;
         switch ($flightClass) {
             case 'pho_thong': 
@@ -221,11 +219,13 @@ class BookingController extends Controller
         // 3. Tính tổng tiền = Giá cơ bản * Hệ số hạng vé * Hệ số khứ hồi * Số lượng hành khách
         $passengerCount = $request->passenger_count ?? 1;
         $totalPrice = $flight->price * $classMultiplier * $tripFactor * $passengerCount;
+
         // Trừ số lượng ghế tồn của chuyến bay trong database
         $flight->decrement('available_seats', $request->passenger_count);
 
-        // Lưu vào database
+        // Lưu vào database (Đã thêm user_id để tự động lưu vào Lịch sử đặt vé)
         $booking = Booking::create([
+            'user_id' => Auth::id(), // <-- ĐÃ BỔ SUNG: Lưu ID tài khoản đăng nhập
             'flight_id' => $request->flight_id,
             'passenger_name' => $request->passenger_name,
             'passenger_email' => $request->passenger_email,
@@ -243,10 +243,10 @@ class BookingController extends Controller
 
         return redirect()->route('booking.success', ['id' => $booking->id, 'ngay_ve' => $request->input('ngay_ve')]);    
     }
+
     // Trang thông báo đặt vé thành công
     public function success($id)
     {
-        // Load kèm theo flight và các quan hệ sân bay đi/đến của flight đó
         $booking = Booking::with('flight.departureAirport', 'flight.arrivalAirport')->findOrFail($id);
 
         return view('booking.success', compact('booking'));
