@@ -5,7 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Booking;
 use App\Models\Flight;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class BookingController extends Controller
 {
@@ -308,7 +312,7 @@ class BookingController extends Controller
 
             // Tạo booking trong transaction
             $newBooking = Booking::create([
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'flight_id' => $lockedFlight->id,
                 'passenger_name' => $request->passenger_name,
                 'passenger_email' => $request->passenger_email,
