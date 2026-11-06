@@ -276,23 +276,31 @@
                         </div>
 
                         <!-- Nút Đặt vé hoặc Hiển thị Hết vé khoang nếu vượt quá 10 ghế -->
-                        @if($isSoldOut)
-                            <button class="btn btn-secondary btn-sm mt-1 w-100" disabled style="padding: 8px 18px; border-radius: 6px; font-weight: bold; cursor: not-allowed;">
-                                Hết vé khoang này
-                            </button>
-                        @else
-                            <a href="{{ route('booking.create', [
-                                'flight_id' => $chuyenBay->id, 
-                                'trip_type' => $rawTrip, 
-                                'loai_chuyen' => $rawTrip, 
-                                'flight_class' => $rawClass,
-                                'hang_ve' => $rawClass,
-                                'passenger_count' => $passengerCount,
-                                'ngay_ve' => $ngayVe
-                            ]) }}" class="btn btn-primary btn-sm mt-1 w-100" style="background: #1455a3; color: white; padding: 8px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">
-                                Đặt vé
-                            </a>
-                        @endif
+@if($isSoldOut)
+    <button class="btn btn-secondary btn-sm mt-1 w-100" disabled style="padding: 8px 18px; border-radius: 6px; font-weight: bold; cursor: not-allowed;">
+        Hết vé khoang này
+    </button>
+@else
+    @auth
+        {{-- Đã đăng nhập: Cho phép bấm đặt vé bình thường --}}
+        <a href="{{ route('booking.create', [
+            'flight_id' => $chuyenBay->id, 
+            'trip_type' => $rawTrip, 
+            'loai_chuyen' => $rawTrip, 
+            'flight_class' => $rawClass,
+            'hang_ve' => $rawClass,
+            'passenger_count' => $passengerCount,
+            'ngay_ve' => $ngayVe
+        ]) }}" class="btn btn-primary btn-sm mt-1 w-100" style="background: #1455a3; color: white; padding: 8px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">
+            Đặt vé
+        </a>
+    @else
+        {{-- Chưa đăng nhập: Chuyển hướng sang trang đăng nhập kèm thông báo nhỏ --}}
+        <a href="{{ route('login') }}" class="btn btn-outline-primary btn-sm mt-1 w-100" onclick="alert('Vui lòng đăng nhập để tiến hành đặt vé!');" style="border: 1px solid #1455a3; color: #1455a3; background: #fff; padding: 8px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">
+            Đăng nhập để đặt vé
+        </a>
+    @endauth
+@endif
                     </div>
                 </div>
             @endforeach

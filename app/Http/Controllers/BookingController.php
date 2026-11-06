@@ -24,8 +24,9 @@ class BookingController extends Controller
 
         // 2. Nhận thêm thông tin loại vé và hạng vé từ URL
         $tripType = $request->query('trip_type', 'one_way');
-        $flightClass = $request->query('flight_class', 'Phổ thông');
+        $flightClass = $request->query('flight_class', 'pho_thong');
         $ngayVe = $request->query('ngay_ve');
+        $passengerCount = $request->query('passenger_count', 1);
 
         // Lấy tất cả các booking của chuyến bay này để gom ghế đã đặt
         $existingBookings = \App\Models\Booking::where('flight_id', $id)->get();
@@ -70,7 +71,74 @@ class BookingController extends Controller
             'C' => max(0, $maxSeats['C'] - $bookedCounts['C']),
         ];
 
-        return view('booking.create', compact('flight', 'tripType', 'flightClass', 'ngayVe', 'bookedSeats', 'remainingSeats', 'maxSeats'));    
+        // 3. Tính toán hệ số hạng vé và hệ số khứ hồi chuẩn xác khớp với trang tìm kiếm
+        $classMultiplier = 1.0;
+        switch ($flightClass) {
+            case 'pho_thong': 
+                $classMultiplier = 1.0; 
+                break;
+            case 'pho_thong_dac_biet': 
+                $classMultiplier = 1.4; 
+                break;
+            case 'thuong_gia': 
+            case 'Thương gia': 
+                $classMultiplier = 2.2; 
+                break;
+            default: 
+                $classMultiplier = 1.0; 
+                break;
+        }
+
+        $isRoundTrip = ($tripType === 'round_trip' || $tripType === 'khu_hoi');
+        $tripFactor = 1.0;
+        if ($isRoundTrip) {
+            switch ($flightClass) {
+                case 'pho_thong': 
+                    $tripFactor = 1.95; 
+                    break;
+                case 'pho_thong_dac_biet': 
+                    $tripFactor = 1.90; 
+                    break;
+                case 'thuong_gia': 
+                case 'Thương gia': 
+                    $tripFactor = 1.85; 
+                    break;
+                default: 
+                    $tripFactor = 1.90; 
+                    break;
+            }
+        }
+
+        // Tính tiền tạm tính chính xác 100% so với ngoài trang tìm kiếm
+        $subTotal = $flight->price * $classMultiplier * $tripFactor * $passengerCount;
+
+        // Định nghĩa danh sách các mức ưu đãi hệ thống
+        $availableVouchers = [
+            [
+                'code' => 'GIAMGIA5',
+                'title' => 'Giảm 5% cho đơn từ 2.000.000 VNĐ',
+                'min_spend' => 2000000,
+                'discount_percent' => 5,
+            ],
+            [
+                'code' => 'GIAMGIA10',
+                'title' => 'Giảm 10% cho đơn từ 5.000.000 VNĐ',
+                'min_spend' => 5000000,
+                'discount_percent' => 10,
+            ],
+        ];
+
+        return view('booking.create', compact(
+            'flight', 
+            'tripType', 
+            'flightClass', 
+            'ngayVe', 
+            'bookedSeats', 
+            'remainingSeats', 
+            'maxSeats',
+            'subTotal',          
+            'availableVouchers'  
+        ));
     }
     public function store(Request $request)
     {
@@ -218,14 +286,29 @@ class BookingController extends Controller
             }
         }
 
-        // 3. Tính tổng tiền = Giá cơ bản * Hệ số hạng vé * Hệ số khứ hồi * Số lượng hành khách
+        // 3. Tính tổng tiền tạm tính (Subtotal) = Giá cơ bản * Hệ số hạng vé * Hệ số khứ hồi * Số lượng hành khách
         $passengerCount = $request->passenger_count ?? 1;
-        $totalPrice = $flight->price * $classMultiplier * $tripFactor * $passengerCount;
+        $subTotal = $flight->price * $classMultiplier * $tripFactor * $passengerCount;
+
+        // 4. Xử lý mã giảm giá dựa trên lựa chọn của khách và kiểm tra điều kiện an toàn
+        $discountAmount = 0;
+        $selectedVoucher = $request->input('selected_voucher');
+
+        if ($selectedVoucher === 'GIAMGIA10' && $subTotal >= 5000000) {
+            $discountAmount = $subTotal * 0.10;
+        } elseif ($selectedVoucher === 'GIAMGIA5' && $subTotal >= 2000000) {
+            $discountAmount = $subTotal * 0.05;
+        }
+
+        // Tổng tiền cuối cùng sau khi đã trừ ưu đãi
+        $finalPrice = $subTotal - $discountAmount;
+        
         // Trừ số lượng ghế tồn của chuyến bay trong database
         $flight->decrement('available_seats', $request->passenger_count);
 
         // Lưu vào database
         $booking = Booking::create([
+            'user_id' => auth()->id(),  
             'flight_id' => $request->flight_id,
             'passenger_name' => $request->passenger_name,
             'passenger_email' => $request->passenger_email,
@@ -236,12 +319,12 @@ class BookingController extends Controller
             'trip_type' => $normalizedTripType, 
             'flight_class' => $flightClass,
             'booking_code' => $pnrCode,
-            'total_price' => $totalPrice,
+            'total_price' => $finalPrice, // Đổi từ $totalPrice thành $finalPrice cho khớp biến đã tính ở trên
             'passengers_data' => $passengersWithSeats,
             'ngay_ve' => $request->input('ngay_ve'),
         ]);
 
-        return redirect()->route('booking.success', ['id' => $booking->id, 'ngay_ve' => $request->input('ngay_ve')]);    
+        return redirect()->route('booking.success', ['id' => $booking->id, 'ngay_ve' => $request->input('ngay_ve')]);
     }
     // Trang thông báo đặt vé thành công
     public function success($id)
