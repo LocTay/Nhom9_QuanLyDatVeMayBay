@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\FlightController;
 use App\Http\Controllers\BookingController; // Thêm dòng gọi Controller đặt vé
 
+use App\Http\Controllers\AdminInvoiceController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
@@ -121,4 +122,10 @@ Route::middleware(['role:admin'])
 
         Route::resource('flights', AdminFlightController::class)
             ->except(['show']);
+
+        Route::get('/invoices', [AdminInvoiceController::class, 'index'])
+            ->name('invoices.index');
+
+        Route::get('/invoices/{booking}', [AdminInvoiceController::class, 'show'])
+            ->name('invoices.show');
     });

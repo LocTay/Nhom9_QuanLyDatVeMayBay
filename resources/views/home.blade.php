@@ -976,6 +976,12 @@
                 <span class="side-icon">✈</span>
                 <span>Quản lý chuyến bay</span>
             </a>
+
+            <a href="{{ route('admin.invoices.index') }}" class="side-link">
+                <span class="side-icon">▤</span>
+                <span>Quản lý hóa đơn</span>
+            </a>
+
             @endif
 
             <a href="#tienich" class="side-link">
@@ -1564,4 +1570,5 @@
         });
     </script>
 </body>
+
 </html>
