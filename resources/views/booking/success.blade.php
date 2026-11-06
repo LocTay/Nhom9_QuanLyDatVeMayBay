@@ -61,7 +61,7 @@
                     <!-- Khung Mã PNR nổi bật -->
                     <div class="pnr-box p-3 text-center mb-4">
                         <span class="info-label d-block mb-1">MÃ ĐẶT CHỖ (PNR)</span>
-                        <h1 class="text-primary fw-bold mb-0" style="letter-spacing: 3px;">{{ $booking->pnr_code }}</h1>
+                        <h1 class="text-primary fw-bold mb-0" style="letter-spacing: 3px;">{{ $booking->booking_code }}</h1>
                     </div>
 
                     <!-- Thông tin chiều đi -->

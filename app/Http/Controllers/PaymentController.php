@@ -113,8 +113,15 @@ class PaymentController extends Controller
         $booking->cancellation_reason = $request->input('reason', 'Khách hàng yêu cầu hủy vé');
         $booking->save();
 
+
         // Hoàn trả số ghế trống cho chuyến bay
-        $booking->flight->increment('available_seats', $booking->number_of_seats ?? 1);
+        if ($booking->flight) {
+            $seatsToReturn = $booking->passenger_count
+                ?? $booking->number_of_seats
+                ?? 1;
+
+            $booking->flight->increment('available_seats', $seatsToReturn);
+        }
 
         $msg = ($booking->refund_status === 'pending_refund')
             ? 'Hủy vé thành công! Yêu cầu hoàn tiền của bạn đã được gửi và đang xử lý.'
@@ -130,6 +137,7 @@ class PaymentController extends Controller
             ->where('user_id', Auth::id())
             ->orderBy('created_at', 'desc')
             ->get();
+
 
         return view('ticket.history', compact('bookings'));
     }
