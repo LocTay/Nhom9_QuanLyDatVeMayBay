@@ -76,8 +76,7 @@
                 ];
                 $displayClass = $classMap[$rawClass] ?? ucwords(str_replace(['_', '-'], ' ', $rawClass));
                 $isRoundTrip = ($rawTrip == 'round_trip' || $rawTrip == 'khu_hoi');
-                
-                // Lấy số lượng hành khách từ URL hoặc request, mặc định là 1
+// Lấy số lượng hành khách từ URL hoặc request, mặc định là 1
                 $defaultCount = old('passenger_count', request('passenger_count', 1));
             @endphp
 
@@ -120,7 +119,7 @@
                         <input type="email" name="passenger_email" class="form-control" value="{{ old('passenger_email') }}" placeholder="example@gmail.com" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold">Số điện thoại liên hệ</label>
+<label class="form-label fw-bold">Số điện thoại liên hệ</label>
                         <input type="text" name="passenger_phone" class="form-control @error('passenger_phone') is-invalid @enderror" value="{{ old('passenger_phone') }}" placeholder="VD: 037xxxxxxx" maxlength="11" required>
                         @error('passenger_phone')
                             <div class="text-danger mt-1" style="font-size: 13px;">{{ $message }}</div>
@@ -163,7 +162,7 @@
                                             data-seat="{{ $seatCode }}" {{ $isBooked ? 'disabled' : '' }}>
                                         {{ $seatCode }}
                                     </button>
-                                </div>
+</div>
                             @endfor
                         </div>
                     @endif
@@ -211,7 +210,7 @@
                 </div>
 
                 <!-- Các input ẩn chứa mã ghế được chọn -->
-                <div id="selected-seats-inputs"></div>
+<div id="selected-seats-inputs"></div>
             </div>
             <!-- === KHUNG CHỌN MÃ ƯU ĐÃI (TOGGLE VOUCHER) === -->
             <div class="card p-3 mb-4 border shadow-sm bg-light">
@@ -258,7 +257,7 @@
                 <!-- BẢNG TỔNG KẾT CHI TIẾT TIỀN -->
                 <div class="mt-3 p-3 bg-white rounded border">
                     <div class="d-flex justify-content-between mb-1">
-                        <span>Tạm tính:</span>
+<span>Tạm tính:</span>
                         <strong id="subtotal-display">{{ number_format($subTotal ?? 0) }} VNĐ</strong>
                     </div>
                     <div class="d-flex justify-content-between mb-1 text-success">
@@ -326,7 +325,7 @@
     }
 
     function updatePrice(percent) {
-        let discountAmount = subtotalVal * (percent / 100);
+let discountAmount = subtotalVal * (percent / 100);
         let finalPrice = subtotalVal - discountAmount;
         
         document.getElementById('discount-display').innerText = discountAmount.toLocaleString('vi-VN');
@@ -377,7 +376,7 @@
                                     <option value="Nữ">Nữ</option>
                                 </select>
                             </div>
-                        </div>
+</div>
                     `;
                     container.appendChild(box);
                 }
@@ -442,7 +441,7 @@
         // Cập nhật lại màu sắc các nút ghế khi thay đổi số lượng hành khách
         function rehighlightSeats() {
             seatButtons.forEach(btn => {
-                const seatCode = btn.getAttribute('data-seat');
+const seatCode = btn.getAttribute('data-seat');
                 if (!btn.classList.contains('disabled')) {
                     if (selectedSeats.includes(seatCode)) {
                         btn.classList.remove('btn-outline-primary');
