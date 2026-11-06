@@ -12,6 +12,11 @@
         color: #d97706;
     }
 
+    .invoice-status-pending_approval {
+        color: #2563eb;
+        font-weight: 700;
+    }
+
     .invoice-status-paid {
         color: #16a34a;
     }
@@ -49,6 +54,14 @@
 </div>
 @endif
 
+{{-- Thông báo đơn chờ Admin duyệt --}}
+@if($pendingApprovalBookings > 0)
+<div class="alert alert-warning">
+    <strong>Có {{ $pendingApprovalBookings }} đơn đang chờ duyệt thanh toán!</strong>
+    Vui lòng kiểm tra và xử lý trước khi hết thời hạn 2 phút.
+</div>
+@endif
+
 {{-- Thống kê tổng quan --}}
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;">
     <div class="card" style="padding:20px;">
@@ -64,6 +77,11 @@
     <div class="card" style="padding:20px;">
         <div style="color:#64748b;">Chờ thanh toán</div>
         <h2>{{ number_format($pendingBookings) }}</h2>
+    </div>
+
+    <div class="card" style="padding:20px;border:1px solid #2563eb;">
+        <div style="color:#2563eb;">Chờ duyệt thanh toán</div>
+        <h2>{{ number_format($pendingApprovalBookings) }}</h2>
     </div>
 
     <div class="card" style="padding:20px;">
@@ -95,22 +113,25 @@
                 name="status"
                 style="width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:8px;">
                 <option value="">Tất cả trạng thái</option>
+
                 @foreach([
-                'pending' => 'Chờ thanh toán',
-                'paid' => 'Đã thanh toán',
-                'failed' => 'Thanh toán thất bại',
-                'cancelled' => 'Đã hủy',
-                'refund_pending' => 'Chờ hoàn tiền',
+                    'pending' => 'Chờ thanh toán',
+                    'pending_approval' => 'Chờ Admin duyệt',
+                    'paid' => 'Đã thanh toán',
+                    'failed' => 'Thanh toán thất bại',
+                    'cancelled' => 'Đã hủy',
+                    'refund_pending' => 'Chờ hoàn tiền',
                 ] as $value => $label)
-                <option value="{{ $value }}"
-                    {{ request('status') === $value ? 'selected' : '' }}>
-                    {{ $label }}
-                </option>
+                    <option value="{{ $value }}"
+                        {{ request('status') === $value ? 'selected' : '' }}>
+                        {{ $label }}
+                    </option>
                 @endforeach
             </select>
         </div>
 
         <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+
         <a href="{{ route('admin.invoices.index') }}" class="btn btn-secondary">
             Đặt lại
         </a>
@@ -137,68 +158,61 @@
 
             <tbody>
                 @forelse($bookings as $booking)
-                @php
-                $statusLabels = [
-                'pending' => 'Chờ thanh toán',
-                'paid' => 'Đã thanh toán',
-                'failed' => 'Thất bại',
-                'cancelled' => 'Đã hủy',
-                'refund_pending' => 'Chờ hoàn tiền',
-                ];
+                    @php
+                        $statusLabels = [
+                            'pending' => 'Chờ thanh toán',
+                            'pending_approval' => 'Chờ Admin duyệt',
+                            'paid' => 'Đã thanh toán',
+                            'failed' => 'Thất bại',
+                            'cancelled' => 'Đã hủy',
+                            'refund_pending' => 'Chờ hoàn tiền',
+                        ];
+                    @endphp
 
-                $statusColors = [
-                'pending' => '#d97706',
-                'paid' => '#16a34a',
-                'failed' => '#dc2626',
-                'cancelled' => '#64748b',
-                'refund_pending' => '#9333ea',
-                ];
-                @endphp
+                    <tr style="border-bottom:1px solid #e2e8f0;">
+                        <td style="padding:12px;font-weight:600;">
+                            {{ $booking->pnr_code ?: $booking->booking_code }}
+                        </td>
 
-                <tr style="border-bottom:1px solid #e2e8f0;">
-                    <td style="padding:12px;font-weight:600;">
-                        {{ $booking->pnr_code ?: $booking->booking_code }}
-                    </td>
+                        <td style="padding:12px;">
+                            <strong>{{ $booking->passenger_name }}</strong>
+                            <div style="font-size:12px;color:#64748b;">
+                                {{ $booking->passenger_email }}
+                            </div>
+                        </td>
 
-                    <td style="padding:12px;">
-                        <strong>{{ $booking->passenger_name }}</strong>
-                        <div style="font-size:12px;color:#64748b;">
-                            {{ $booking->passenger_email }}
-                        </div>
-                    </td>
+                        <td style="padding:12px;">
+                            {{ $booking->flight?->flight_number ?? 'Không xác định' }}
+                        </td>
 
-                    <td style="padding:12px;">
-                        {{ $booking->flight?->flight_number ?? 'Không xác định' }}
-                    </td>
+                        <td style="padding:12px;">
+                            {{ $booking->passenger_count ?? $booking->number_of_seats }}
+                        </td>
 
-                    <td style="padding:12px;">
-                        {{ $booking->passenger_count ?? $booking->number_of_seats }}
-                    </td>
+                        <td style="padding:12px;">
+                            {{ number_format($booking->total_price, 0, ',', '.') }} đ
+                        </td>
 
-                    <td style="padding:12px;">
-                        {{ number_format($booking->total_price, 0, ',', '.') }} đ
-                    </td>
+                        <td style="padding:12px;">
+                            <span class="invoice-status invoice-status-{{ $booking->status }}">
+                                {{ $statusLabels[$booking->status] ?? $booking->status }}
+                            </span>
+                        </td>
 
-                    <td style="padding:12px;">
-                        <span class="invoice-status invoice-status-{{ $booking->status }}">
-                            {{ $statusLabels[$booking->status] ?? $booking->status }}
-                        </span>
-                    </td>
-
-                    <td style="padding:12px;">
-                        <a href="{{ route('admin.invoices.show', $booking->id) }}"
-                            class="btn btn-primary">
-                            Chi tiết
-                        </a>
-                    </td>
-                </tr>
+                        <td style="padding:12px;">
+                            <a href="{{ route('admin.invoices.show', $booking->id) }}"
+                                class="btn btn-primary">
+                                Chi tiết
+                            </a>
+                        </td>
+                    </tr>
                 @empty
-                <tr>
-                    <td colspan="7"
-                        style="padding:30px;text-align:center;color:#64748b;">
-                        Không tìm thấy hóa đơn phù hợp.
-                    </td>
-                </tr>
+                    <tr>
+                        <td colspan="7"
+                            style="padding:30px;text-align:center;color:#64748b;">
+                            Không tìm thấy hóa đơn phù hợp.
+                        </td>
+                    </tr>
                 @endforelse
             </tbody>
         </table>

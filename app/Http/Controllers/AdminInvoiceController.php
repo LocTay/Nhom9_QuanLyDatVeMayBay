@@ -44,12 +44,13 @@ class AdminInvoiceController extends Controller
 
         $totalRevenue = Booking::where('status', 'paid')
             ->sum('total_price');
-
+        $pendingApprovalBookings = Booking::where('status', 'pending_approval')->count();
         return view('admin.invoices.index', compact(
             'bookings',
             'totalBookings',
             'paidBookings',
             'pendingBookings',
+            'pendingApprovalBookings',
             'totalRevenue'
         ));
     }

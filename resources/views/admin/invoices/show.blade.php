@@ -8,6 +8,7 @@
 
     $statusLabels = [
         'pending' => 'Chờ thanh toán',
+        'pending_approval' => 'Chờ Admin duyệt',
         'paid' => 'Đã thanh toán',
         'failed' => 'Thanh toán thất bại',
         'cancelled' => 'Đã hủy',
@@ -89,7 +90,44 @@
         display: flex;
         gap: 12px;
         flex-wrap: wrap;
+        align-items: center;
         margin-top: 24px;
+    }
+
+    .approval-warning {
+        border: 1px solid #f59e0b;
+        background: #fffbeb;
+    }
+
+    .approval-warning h2 {
+        color: #92400e;
+    }
+
+    .approval-warning p {
+        color: #78350f;
+        line-height: 1.6;
+    }
+
+    .approval-deadline {
+        color: #b91c1c;
+        font-weight: 700;
+    }
+
+    .btn-danger {
+        display: inline-block;
+        padding: 10px 18px;
+        border: 1px solid #dc2626;
+        border-radius: 6px;
+        background: #dc2626;
+        color: #ffffff;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .btn-danger:hover {
+        background: #b91c1c;
+        border-color: #b91c1c;
     }
 
     @media print {
@@ -158,6 +196,26 @@
                 <span>Phương thức thanh toán</span>
                 <strong>{{ $booking->payment_method ?: 'Chưa có' }}</strong>
             </div>
+
+            @if($booking->status === 'pending_approval')
+                <div class="invoice-detail-row">
+                    <span>Khách xác nhận chuyển khoản</span>
+                    <strong>
+                        {{ $booking->payment_confirmed_at
+                            ? $booking->payment_confirmed_at->format('d/m/Y H:i:s')
+                            : 'Không có dữ liệu' }}
+                    </strong>
+                </div>
+
+                <div class="invoice-detail-row">
+                    <span>Hạn Admin duyệt</span>
+                    <strong class="approval-deadline">
+                        {{ $booking->approval_expires_at
+                            ? $booking->approval_expires_at->format('d/m/Y H:i:s')
+                            : 'Không có dữ liệu' }}
+                    </strong>
+                </div>
+            @endif
         </div>
     </div>
 </div>
@@ -310,13 +368,60 @@
     @endif
 </div>
 
+{{-- Thao tác duyệt thanh toán --}}
+@if($booking->status === 'pending_approval')
+    <div class="invoice-detail-card approval-warning">
+        <h2>Yêu cầu duyệt thanh toán</h2>
+
+        <p>
+            Khách hàng đã xác nhận chuyển khoản. Admin cần kiểm tra giao dịch
+            và xử lý đơn trong vòng 2 phút kể từ thời điểm khách xác nhận.
+        </p>
+
+        @if($booking->approval_expires_at)
+            <p>
+                Hạn xử lý:
+                <strong class="approval-deadline">
+                    {{ $booking->approval_expires_at->format('d/m/Y H:i:s') }}
+                </strong>
+            </p>
+        @endif
+
+        <div class="invoice-detail-actions">
+            <form
+                action="{{ route('admin.ticket.approve', $booking->booking_code) }}"
+                method="POST"
+                onsubmit="return confirm('Bạn xác nhận đã kiểm tra giao dịch và duyệt thanh toán cho đơn này?')"
+            >
+                @csrf
+
+                <button type="submit" class="btn btn-primary">
+                    Duyệt thanh toán
+                </button>
+            </form>
+
+            <form
+                action="{{ route('admin.ticket.cancel-pending', $booking->booking_code) }}"
+                method="POST"
+                onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn chờ duyệt này? Số ghế sẽ được hoàn lại.')"
+            >
+                @csrf
+
+                <button type="submit" class="btn-danger">
+                    Hủy đơn
+                </button>
+            </form>
+        </div>
+    </div>
+@endif
+
+{{-- Nút điều hướng --}}
 <div class="invoice-detail-actions">
     <a href="{{ route('admin.invoices.index') }}" class="btn btn-secondary">
         Quay lại danh sách
     </a>
 
-    <button type="button" class="btn btn-primary"
-            onclick="window.print()">
+    <button type="button" class="btn btn-primary" onclick="window.print()">
         In hóa đơn
     </button>
 </div>
