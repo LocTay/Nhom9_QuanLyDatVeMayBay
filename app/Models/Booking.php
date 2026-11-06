@@ -29,8 +29,11 @@ class Booking extends Model
         'refund_status',
         'cancellation_reason',
     ];
+  protected $table = 'bookings';
+
     protected $casts = [
-        'passengers_data' => 'array', // Ép kiểu tự động mã hóa/giải mã JSON sang mảng PHP
+        'passengers_data' => 'array', // Tự động decode dữ liệu JSON hành khách
+        'payment_time' => 'datetime',
     ];
 
 

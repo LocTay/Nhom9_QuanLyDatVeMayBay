@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Booking;
+use App\Models\Flight;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class PaymentController extends Controller
 {
@@ -25,10 +27,7 @@ class PaymentController extends Controller
         ]);
 
         $code = strtoupper(trim($request->booking_code));
-
-        $booking = Booking::where('pnr_code', $code)
-            ->orWhere('booking_code', $code)
-            ->first();
+        $booking = Booking::where('booking_code', $code)->first();
 
         if (!$booking) {
             return redirect()->back()->with('error', 'Không tìm thấy mã đặt chỗ ' . $code . ' trên hệ thống!');
@@ -39,7 +38,7 @@ class PaymentController extends Controller
         ]);
     }
 
-    // 3. Hiển thị chi tiết vé & chuyến bay, hành khách
+    // 3. Hiển thị chi tiết vé (Đã bỏ load relation 'passengers' vì lấy từ cột JSON)
     public function showDetail($booking_code)
     {
         $booking = Booking::with(['flight.departureAirport', 'flight.arrivalAirport'])
@@ -52,7 +51,7 @@ class PaymentController extends Controller
         return view('ticket.detail', compact('booking'));
     }
 
-    // 4. Xử lý mô phỏng thanh toán (pending -> paid / failed / pending)
+    // 4. Xử lý mô phỏng thanh toán
     public function processPayment(Request $request, $booking_code)
     {
         $booking = Booking::where('pnr_code', $booking_code)
@@ -71,23 +70,18 @@ class PaymentController extends Controller
         if ($paymentStatus === 'success') {
             $booking->status = 'paid';
             $booking->payment_time = now();
-            $booking->payment_method = $request->input('payment_method', 'Mô phỏng VNPay/MoMo');
             $booking->save();
 
             return redirect()->back()->with('success', 'Thanh toán thành công! Vé của bạn đã được xác nhận.');
-        } elseif ($paymentStatus === 'pending') {
-            $booking->status = 'pending';
-            $booking->save();
-
-            return redirect()->back()->with('warning', 'Vé đang ở trạng thái chờ thanh toán.');
         } else {
             $booking->status = 'failed';
             $booking->save();
+
             return redirect()->back()->with('error', 'Thanh toán thất bại! Vui lòng thử lại.');
         }
     }
 
-    // 5. Quy tắc hủy vé (Hủy trước 24h, cộng trả lại ghế trống & mô phỏng hoàn tiền)
+    // 5. Quy tắc hủy vé (Hủy trước 24h & cộng trả lại ghế trống)
     public function cancelTicket(Request $request, $booking_code)
     {
         $booking = Booking::with('flight')->where('pnr_code', $booking_code)->firstOrFail();
@@ -96,49 +90,44 @@ class PaymentController extends Controller
             return redirect()->back()->with('info', 'Vé này đã được hủy từ trước.');
         }
 
-        // Kiểm tra an toàn xem dữ liệu chuyến bay có tồn tại hay không
+        // Kiểm tra an toàn dữ liệu chuyến bay
         if (!$booking->flight) {
             return redirect()->back()->with('error', 'Không tìm thấy thông tin chuyến bay liên quan đến vé này.');
         }
 
-        // Kiểm tra an toàn giờ khởi hành
+        // Kiểm tra điều kiện thời gian (Hủy trước 24h)
         if (!empty($booking->flight->departure_time)) {
             $departureTime = Carbon::parse($booking->flight->departure_time);
+            
+            if (Carbon::now()->isAfter($departureTime)) {
+                return redirect()->back()->with('error', 'Không thể hủy vé cho chuyến bay đã cất cánh!');
+            }
+
             if (Carbon::now()->diffInHours($departureTime, false) < 24) {
-                return redirect()->back()->with('error', 'Không thể hủy vé! Quy định hệ thống chỉ hỗ trợ hủy trước giờ khởi hành 24 tiếng.');
+                return redirect()->back()->with('error', 'Không thể hủy vé! Hệ thống chỉ hỗ trợ hủy trước giờ khởi hành tối thiểu 24 tiếng.');
             }
         }
 
-        // Mô phỏng trạng thái hoàn tiền nếu vé đã thanh toán trước đó
-        if ($booking->status === 'paid') {
-            $booking->refund_status = 'pending_refund'; // Chờ hoàn tiền
-        } else {
-            $booking->refund_status = 'no_refund';
-        }
+        $seatsToRestore = max((int)($booking->number_of_seats ?? 1), 1);
 
-        // Đổi trạng thái vé & lưu lý do
-        $booking->status = 'cancelled';
-        $booking->cancellation_reason = $request->input('reason', 'Khách hàng yêu cầu hủy vé');
-        $booking->save();
+        // Thực thi Transaction để cập nhật CSDL chính xác
+        DB::transaction(function () use ($booking, $seatsToRestore) {
+            // 1. Cập nhật trạng thái vé
+            $booking->status = 'cancelled';
+            $booking->save();
 
+            // 2. Trực tiếp tăng số ghế khả dụng trong bảng flights
+            if ($booking->flight_id) {
+                Flight::where('id', $booking->flight_id)->increment('available_seats', $seatsToRestore);
+            }
+        });
 
-        // Hoàn trả số ghế trống cho chuyến bay
-        if ($booking->flight) {
-            $seatsToReturn = $booking->passenger_count
-                ?? $booking->number_of_seats
-                ?? 1;
-
-            $booking->flight->increment('available_seats', $seatsToReturn);
-        }
-
-        $msg = ($booking->refund_status === 'pending_refund')
-            ? 'Hủy vé thành công! Yêu cầu hoàn tiền của bạn đã được gửi và đang xử lý.'
-            : 'Hủy đặt chỗ thành công! Ghế trống đã được cập nhật lại cho chuyến bay.';
-
-        return redirect()->back()->with('success', $msg);
+        return redirect()->back()->with('success', "Hủy vé thành công! Đã hoàn trả lại {$seatsToRestore} ghế trống cho chuyến bay.");
     }
 
-    // 6. Xem lịch sử đặt vé của khách hàng đang đăng nhập
+
+
+    // 6. Lịch sử đặt vé của tài khoản đang đăng nhập
     public function history()
     {
         $bookings = Booking::with(['flight.departureAirport', 'flight.arrivalAirport'])
@@ -146,7 +135,48 @@ class PaymentController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-
         return view('ticket.history', compact('bookings'));
+    }
+
+    // Trang hiển thị QR thanh toán
+    public function showPaymentPage($booking_code)
+    {
+        $booking = Booking::with(['flight.departureAirport', 'flight.arrivalAirport'])
+            ->where('booking_code', $booking_code)
+            ->firstOrFail();
+
+        if ($booking->status === 'paid') {
+            return redirect()->route('ticket.detail', $booking_code)->with('info', 'Vé này đã được thanh toán thành công.');
+        }
+
+        return view('ticket.payment', compact('booking'));
+    }
+
+    // Khách hàng bấm "Xác nhận chuyển khoản" -> Đổi trạng thái thành "pending_approval"
+    public function submitTransfer($booking_code)
+    {
+        $booking = Booking::where('booking_code', $booking_code)->firstOrFail();
+
+        if ($booking->status === 'cancelled') {
+            return redirect()->route('ticket.detail', $booking_code)->with('error', 'Vé đã bị hủy, không thể thanh toán!');
+        }
+
+        $booking->status = 'pending_approval'; // Đang chờ duyệt
+        $booking->save();
+
+        return redirect()->route('ticket.detail', $booking_code)
+            ->with('info', 'Hệ thống đã ghi nhận thông tin! Đơn đặt vé của bạn đang chờ Admin xác nhận thanh toán.');
+    }
+
+    // Mô phỏng Admin duyệt thanh toán -> Đổi trạng thái thành "paid" (Thành công)
+    public function adminApprovePayment($booking_code)
+    {
+        $booking = Booking::where('booking_code', $booking_code)->firstOrFail();
+
+        $booking->status = 'paid';
+        $booking->payment_time = now();
+        $booking->save();
+
+        return redirect()->back()->with('success', 'Admin đã duyệt thanh toán thành công cho mã vé ' . $booking_code);
     }
 }

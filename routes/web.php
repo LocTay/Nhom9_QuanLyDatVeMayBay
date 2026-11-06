@@ -140,3 +140,11 @@ Route::middleware(['role:admin'])
         Route::post('/refunds/{booking}/complete', [AdminRefundController::class, 'complete'])
             ->name('refunds.complete');
     });
+// 1. Trang giao diện thanh toán QR
+Route::get('/ve/{booking_code}/thanh-toan', [PaymentController::class, 'showPaymentPage'])->name('ticket.payment.page');
+
+// 2. Khách hàng gửi yêu cầu "Xác nhận chuyển khoản"
+Route::post('/ve/{booking_code}/xac-nhan-chuyen-khoan', [PaymentController::class, 'submitTransfer'])->name('ticket.payment.submit');
+
+// 3. Admin duyệt thanh toán (Mô phỏng)
+Route::post('/admin/ve/{booking_code}/duyet-thanh-toan', [PaymentController::class, 'adminApprovePayment'])->name('admin.ticket.approve');

@@ -5,10 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Booking;
 use App\Models\Flight;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
 
 class BookingController extends Controller
 {
@@ -26,10 +23,11 @@ class BookingController extends Controller
         $ngayVe = $request->query('ngay_ve');
         $passengerCount = $request->query('passenger_count', 1);
 
-        // Vé đã hủy không còn giữ ghế.
+        // Lấy các booking CHƯA HỦY của chuyến bay này để gom ghế đã đặt
         $existingBookings = Booking::where('flight_id', $id)
-            ->where('status', '!=', 'cancelled')
+            ->where('status', '!=', 'cancelled') // <-- ĐÃ SỬA: Loại bỏ các vé đã hủy
             ->get();
+
         $bookedSeats = [];
 
         foreach ($existingBookings as $booking) {
