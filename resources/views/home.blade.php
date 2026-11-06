@@ -982,16 +982,21 @@
                 <span>Quản lý hóa đơn</span>
             </a>
 
+            <a href="{{ route('admin.refunds.index') }}" class="side-link">
+                <span class="side-icon">↺</span>
+                <span>Quản lý hoàn tiền</span>
+            </a>
+
             @endif
 
             <a href="#tienich" class="side-link">
                 <span class="side-icon">✧</span>
                 <span>Dịch vụ</span>
             </a>
-<a href="{{ route('contact') }}" class="side-link">
-    <span class="side-icon">☏</span>
-    <span>Liên hệ</span>
-</a>
+            <a href="{{ route('contact') }}" class="side-link">
+                <span class="side-icon">☏</span>
+                <span>Liên hệ</span>
+            </a>
         </nav>
 
         <div class="sidebar-spacer"></div>
@@ -1267,232 +1272,232 @@
 
         <!-- CHÂN TRANG -->
         <footer class="site-footer" id="footer">
-    <div class="footer-container">
+            <div class="footer-container">
 
-        {{-- Thông tin thương hiệu --}}
-        <div class="footer-column footer-about">
-            <a href="{{ url('/') }}" class="footer-logo">
-                <span class="footer-logo-icon">✈</span>
-                Sky<span>Booking</span>
-            </a>
+                {{-- Thông tin thương hiệu --}}
+                <div class="footer-column footer-about">
+                    <a href="{{ url('/') }}" class="footer-logo">
+                        <span class="footer-logo-icon">✈</span>
+                        Sky<span>Booking</span>
+                    </a>
 
-            <p class="footer-description">
-                SkyBooking mang đến giải pháp tìm kiếm và đặt vé máy bay trực tuyến
-                tiện lợi, giúp bạn dễ dàng lên kế hoạch cho mọi hành trình.
-            </p>
+                    <p class="footer-description">
+                        SkyBooking mang đến giải pháp tìm kiếm và đặt vé máy bay trực tuyến
+                        tiện lợi, giúp bạn dễ dàng lên kế hoạch cho mọi hành trình.
+                    </p>
 
-            <div class="footer-slogan">
-                Hành trình của bạn, khởi đầu từ đây.
+                    <div class="footer-slogan">
+                        Hành trình của bạn, khởi đầu từ đây.
+                    </div>
+                </div>
+
+                {{-- Điều hướng --}}
+                <div class="footer-column">
+                    <h3>Khám phá</h3>
+                    <ul class="footer-links">
+                        <li><a href="{{ url('/') }}">Trang chủ</a></li>
+                        <li><a href="{{ route('flights.search') }}">Tìm chuyến bay</a></li>
+                        <li><a href="{{ route('ticket.lookup.form') }}">Tra cứu vé</a></li>
+                        <li><a href="{{ route('contact') }}">Liên hệ</a></li>
+                    </ul>
+                </div>
+
+                {{-- Dịch vụ --}}
+                <div class="footer-column">
+                    <h3>Dịch vụ</h3>
+                    <ul class="footer-links">
+                        <li><a href="{{ route('flights.search') }}">Tìm kiếm chuyến bay</a></li>
+                        <li><a href="{{ route('ticket.lookup.form') }}">Quản lý đặt vé</a></li>
+                        <li><a href="{{ route('contact') }}">Hỗ trợ khách hàng</a></li>
+                    </ul>
+                </div>
+
+                {{-- Hỗ trợ --}}
+                <div class="footer-column">
+                    <h3>Hỗ trợ khách hàng</h3>
+                    <p class="footer-support-text">
+                        Bạn cần hỗ trợ về chuyến bay hoặc đặt vé?
+                        Hãy gửi yêu cầu cho chúng tôi qua trang liên hệ.
+                    </p>
+
+                    <a href="{{ route('contact') }}" class="footer-contact-btn">
+                        Gửi yêu cầu hỗ trợ
+                        <span>→</span>
+                    </a>
+                </div>
+
             </div>
-        </div>
 
-        {{-- Điều hướng --}}
-        <div class="footer-column">
-            <h3>Khám phá</h3>
-            <ul class="footer-links">
-                <li><a href="{{ url('/') }}">Trang chủ</a></li>
-                <li><a href="{{ route('flights.search') }}">Tìm chuyến bay</a></li>
-                <li><a href="{{ route('ticket.lookup.form') }}">Tra cứu vé</a></li>
-                <li><a href="{{ route('contact') }}">Liên hệ</a></li>
-            </ul>
-        </div>
+            <div class="footer-bottom">
+                <p>© {{ date('Y') }} SkyBooking. All rights reserved.</p>
+                <p>Website quản lý và đặt vé máy bay trực tuyến.</p>
+            </div>
+        </footer>
 
-        {{-- Dịch vụ --}}
-        <div class="footer-column">
-            <h3>Dịch vụ</h3>
-            <ul class="footer-links">
-                <li><a href="{{ route('flights.search') }}">Tìm kiếm chuyến bay</a></li>
-                <li><a href="{{ route('ticket.lookup.form') }}">Quản lý đặt vé</a></li>
-                <li><a href="{{ route('contact') }}">Hỗ trợ khách hàng</a></li>
-            </ul>
-        </div>
+        <style>
+            .site-footer {
+                background: #082b55;
+                color: #ffffff;
+                padding: 55px 7% 0;
+                margin-top: 60px;
+                font-family: 'Be Vietnam Pro', sans-serif;
+            }
 
-        {{-- Hỗ trợ --}}
-        <div class="footer-column">
-            <h3>Hỗ trợ khách hàng</h3>
-            <p class="footer-support-text">
-                Bạn cần hỗ trợ về chuyến bay hoặc đặt vé?
-                Hãy gửi yêu cầu cho chúng tôi qua trang liên hệ.
-            </p>
+            .footer-container {
+                max-width: 1250px;
+                margin: 0 auto;
+                display: grid;
+                grid-template-columns: 1.5fr 1fr 1fr 1.3fr;
+                gap: 45px;
+                padding-bottom: 45px;
+            }
 
-            <a href="{{ route('contact') }}" class="footer-contact-btn">
-                Gửi yêu cầu hỗ trợ
-                <span>→</span>
-            </a>
-        </div>
+            .footer-logo {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                color: #ffffff;
+                text-decoration: none;
+                font-size: 27px;
+                font-weight: 800;
+                letter-spacing: -1px;
+            }
 
-    </div>
+            .footer-logo span:last-child {
+                color: #d6ad55;
+            }
 
-    <div class="footer-bottom">
-        <p>© {{ date('Y') }} SkyBooking. All rights reserved.</p>
-        <p>Website quản lý và đặt vé máy bay trực tuyến.</p>
-    </div>
-</footer>
+            .footer-logo-icon {
+                color: #d6ad55;
+                font-size: 29px;
+            }
 
-<style>
-    .site-footer {
-        background: #082b55;
-        color: #ffffff;
-        padding: 55px 7% 0;
-        margin-top: 60px;
-        font-family: 'Be Vietnam Pro', sans-serif;
-    }
+            .footer-description {
+                color: #c3d0df;
+                font-size: 13px;
+                line-height: 1.9;
+                margin: 18px 0;
+            }
 
-    .footer-container {
-        max-width: 1250px;
-        margin: 0 auto;
-        display: grid;
-        grid-template-columns: 1.5fr 1fr 1fr 1.3fr;
-        gap: 45px;
-        padding-bottom: 45px;
-    }
+            .footer-slogan {
+                color: #d6ad55;
+                font-size: 12px;
+                font-weight: 600;
+                font-style: italic;
+            }
 
-    .footer-logo {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        color: #ffffff;
-        text-decoration: none;
-        font-size: 27px;
-        font-weight: 800;
-        letter-spacing: -1px;
-    }
+            .footer-column h3 {
+                color: #ffffff;
+                font-size: 15px;
+                font-weight: 700;
+                margin: 5px 0 22px;
+                position: relative;
+                padding-bottom: 12px;
+            }
 
-    .footer-logo span:last-child {
-        color: #d6ad55;
-    }
+            .footer-column h3::after {
+                content: "";
+                position: absolute;
+                left: 0;
+                bottom: 0;
+                width: 35px;
+                height: 2px;
+                background: #d6ad55;
+                border-radius: 5px;
+            }
 
-    .footer-logo-icon {
-        color: #d6ad55;
-        font-size: 29px;
-    }
+            .footer-links {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
 
-    .footer-description {
-        color: #c3d0df;
-        font-size: 13px;
-        line-height: 1.9;
-        margin: 18px 0;
-    }
+            .footer-links li {
+                margin-bottom: 14px;
+            }
 
-    .footer-slogan {
-        color: #d6ad55;
-        font-size: 12px;
-        font-weight: 600;
-        font-style: italic;
-    }
+            .footer-links a {
+                color: #c3d0df;
+                text-decoration: none;
+                font-size: 13px;
+                transition: 0.25s ease;
+            }
 
-    .footer-column h3 {
-        color: #ffffff;
-        font-size: 15px;
-        font-weight: 700;
-        margin: 5px 0 22px;
-        position: relative;
-        padding-bottom: 12px;
-    }
+            .footer-links a:hover {
+                color: #d6ad55;
+                padding-left: 5px;
+            }
 
-    .footer-column h3::after {
-        content: "";
-        position: absolute;
-        left: 0;
-        bottom: 0;
-        width: 35px;
-        height: 2px;
-        background: #d6ad55;
-        border-radius: 5px;
-    }
+            .footer-support-text {
+                color: #c3d0df;
+                font-size: 13px;
+                line-height: 1.9;
+                margin: 0 0 20px;
+            }
 
-    .footer-links {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
+            .footer-contact-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 12px;
+                padding: 11px 17px;
+                background: #d6ad55;
+                color: #082b55;
+                border-radius: 7px;
+                text-decoration: none;
+                font-size: 12px;
+                font-weight: 700;
+                transition: 0.25s ease;
+            }
 
-    .footer-links li {
-        margin-bottom: 14px;
-    }
+            .footer-contact-btn:hover {
+                background: #edca7b;
+                transform: translateY(-2px);
+            }
 
-    .footer-links a {
-        color: #c3d0df;
-        text-decoration: none;
-        font-size: 13px;
-        transition: 0.25s ease;
-    }
+            .footer-contact-btn span {
+                font-size: 17px;
+            }
 
-    .footer-links a:hover {
-        color: #d6ad55;
-        padding-left: 5px;
-    }
+            .footer-bottom {
+                max-width: 1250px;
+                margin: 0 auto;
+                border-top: 1px solid rgba(255, 255, 255, 0.15);
+                padding: 20px 0;
+                display: flex;
+                justify-content: space-between;
+                gap: 15px;
+                flex-wrap: wrap;
+            }
 
-    .footer-support-text {
-        color: #c3d0df;
-        font-size: 13px;
-        line-height: 1.9;
-        margin: 0 0 20px;
-    }
+            .footer-bottom p {
+                margin: 0;
+                color: #aebed0;
+                font-size: 11px;
+            }
 
-    .footer-contact-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 12px;
-        padding: 11px 17px;
-        background: #d6ad55;
-        color: #082b55;
-        border-radius: 7px;
-        text-decoration: none;
-        font-size: 12px;
-        font-weight: 700;
-        transition: 0.25s ease;
-    }
+            @media (max-width: 900px) {
+                .footer-container {
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 35px;
+                }
+            }
 
-    .footer-contact-btn:hover {
-        background: #edca7b;
-        transform: translateY(-2px);
-    }
+            @media (max-width: 550px) {
+                .site-footer {
+                    padding: 40px 6% 0;
+                }
 
-    .footer-contact-btn span {
-        font-size: 17px;
-    }
+                .footer-container {
+                    grid-template-columns: 1fr;
+                    gap: 28px;
+                }
 
-    .footer-bottom {
-        max-width: 1250px;
-        margin: 0 auto;
-        border-top: 1px solid rgba(255,255,255,0.15);
-        padding: 20px 0;
-        display: flex;
-        justify-content: space-between;
-        gap: 15px;
-        flex-wrap: wrap;
-    }
-
-    .footer-bottom p {
-        margin: 0;
-        color: #aebed0;
-        font-size: 11px;
-    }
-
-    @media (max-width: 900px) {
-        .footer-container {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 35px;
-        }
-    }
-
-    @media (max-width: 550px) {
-        .site-footer {
-            padding: 40px 6% 0;
-        }
-
-        .footer-container {
-            grid-template-columns: 1fr;
-            gap: 28px;
-        }
-
-        .footer-bottom {
-            flex-direction: column;
-            text-align: center;
-        }
-    }
-</style>
+                .footer-bottom {
+                    flex-direction: column;
+                    text-align: center;
+                }
+            }
+        </style>
     </main>
 
     <script>
