@@ -355,6 +355,11 @@
             class="side-link {{ request()->routeIs('admin.flights.*') ? 'active' : '' }}">
             ✈ &nbsp; Quản lý chuyến bay
         </a>
+
+        <a href="{{ route('admin.invoices.index') }}"
+            class="side-link {{ request()->routeIs('admin.invoices.*') ? 'active' : '' }}">
+            ▤ &nbsp; Quản lý hóa đơn
+        </a>
     </aside>
 
     <main class="main">
