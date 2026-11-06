@@ -210,9 +210,9 @@
                 </div>
 
                 <!-- Các input ẩn chứa mã ghế được chọn -->
-<div id="selected-seats-inputs"></div>
+                <div id="selected-seats-inputs"></div>
             </div>
-            <!-- === KHUNG CHỌN MÃ ƯU ĐÃI (TOGGLE VOUCHER) === -->
+                <!-- === KHUNG CHỌN MÃ ƯU ĐÃI (TOGGLE VOUCHER) === -->
             <div class="card p-3 mb-4 border shadow-sm bg-light">
                 <h5 class="fw-bold text-primary mb-3"><i class="bi bi-tag-fill me-2"></i>Chọn mã ưu đãi / khuyến mãi</h5>
                 
@@ -221,13 +221,13 @@
                         @foreach($availableVouchers as $voucher)
                             @php
                                 $isEligible = ($subTotal ?? 0) >= $voucher['min_spend'];
-                            @endphp
+                            @endphp <!-- Sửa lại thành @endphp ở đây -->
 
                             <div class="voucher-card border p-3 mb-2 rounded {{ $isEligible ? 'bg-white shadow-sm' : 'bg-light text-muted opacity-75' }}"
-                                 @if($isEligible)
-                                     onclick="toggleVoucher('{{ $voucher['code'] }}', {{ $voucher['discount_percent'] }}, this)"
-                                     style="cursor: pointer; transition: all 0.2s;"
-                                 @endif>
+                                data-code="{{ $voucher['code'] }}"
+                                data-min-spend="{{ $voucher['min_spend'] }}"
+                                data-percent="{{ $voucher['discount_percent'] }}"
+                                style="cursor: pointer; transition: all 0.2s;">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <h6 class="fw-bold mb-1 {{ $isEligible ? 'text-dark' : 'text-muted' }}">
@@ -240,7 +240,7 @@
                                         @if($isEligible)
                                             <span class="badge bg-secondary voucher-badge px-3 py-2">Chưa chọn</span>
                                         @else
-                                            <span class="badge bg-secondary">Chưa đủ điều kiện</span>
+                                            <span class="badge bg-secondary voucher-badge px-3 py-2">Chưa đủ điều kiện</span>
                                         @endif
                                     </div>
                                 </div>
@@ -257,7 +257,7 @@
                 <!-- BẢNG TỔNG KẾT CHI TIẾT TIỀN -->
                 <div class="mt-3 p-3 bg-white rounded border">
                     <div class="d-flex justify-content-between mb-1">
-<span>Tạm tính:</span>
+                        <span>Tạm tính:</span>
                         <strong id="subtotal-display">{{ number_format($subTotal ?? 0) }} VNĐ</strong>
                     </div>
                     <div class="d-flex justify-content-between mb-1 text-success">
@@ -285,18 +285,17 @@
 </div>
 
 <script>
-    //
     let activeCode = null;
-    const subtotalVal = {{ $subTotal ?? 0 }};
+    const baseSubtotalVal = {{ $subTotal ?? 0 }};
 
     function toggleVoucher(code, percent, element) {
+        // Chỉ cho phép click nếu thẻ đang đủ điều kiện (có class bg-white)
+        if (!element.classList.contains('bg-white')) return;
+
         const badge = element.querySelector('.voucher-badge');
         const input = document.getElementById('selected_voucher_input');
-        const discountDisplay = document.getElementById('discount-display');
-        const finalPriceDisplay = document.getElementById('final-price-display');
 
         if (activeCode === code) {
-            // Click lần nữa để hủy chọn (Toggle OFF)
             activeCode = null;
             input.value = '';
             element.classList.remove('border-primary', 'bg-primary-subtle');
@@ -304,33 +303,88 @@
             badge.innerText = 'Chưa chọn';
             updatePrice(0);
         } else {
-            // Reset tất cả các card khác về trạng thái chưa chọn
             document.querySelectorAll('.voucher-card').forEach(c => {
                 c.classList.remove('border-primary', 'bg-primary-subtle');
                 let b = c.querySelector('.voucher-badge');
-                if(b) {
+                if(b && b.innerText.includes('Đang áp dụng')) {
                     b.className = 'badge bg-secondary voucher-badge px-3 py-2';
                     b.innerText = 'Chưa chọn';
                 }
             });
 
-            // Chọn mã này (Toggle ON)
             activeCode = code;
             input.value = code;
             element.classList.add('border-primary', 'bg-primary-subtle');
             badge.className = 'badge bg-success voucher-badge px-3 py-2';
             badge.innerText = 'Đang áp dụng ✓';
+            
             updatePrice(percent);
         }
     }
 
-    function updatePrice(percent) {
-let discountAmount = subtotalVal * (percent / 100);
-        let finalPrice = subtotalVal - discountAmount;
+    // Hàm cập nhật giá tiền và kiểm tra lại điều kiện voucher theo tổng tiền mới
+    function updatePrice(forcedPercent = null) {
+        const countInput = document.getElementById('passenger_count');
+        const passengerCount = parseInt(countInput.value) || 1;
         
+        const currentSubtotal = baseSubtotalVal * passengerCount;
+        
+        let currentPercent = 0;
+        
+        // Kiểm tra và cập nhật trạng thái sáng/mờ của từng voucher dựa trên tổng tiền mới
+        document.querySelectorAll('.voucher-card').forEach(card => {
+            const minSpend = parseInt(card.getAttribute('data-min-spend')) || 0;
+            const percent = parseInt(card.getAttribute('data-percent')) || 0;
+            const badge = card.querySelector('div:last-child span');
+
+            if (currentSubtotal >= minSpend) {
+                // Đủ điều kiện: Sáng lên và cho phép click
+                card.classList.remove('bg-light', 'text-muted', 'opacity-75');
+                card.classList.add('bg-white', 'shadow-sm');
+                
+                if (card.getAttribute('data-code') === activeCode) {
+                    badge.className = 'badge bg-success voucher-badge px-3 py-2';
+                    badge.innerText = 'Đang áp dụng ✓';
+                    currentPercent = percent;
+                } else if (badge.innerText === 'Chưa đủ điều kiện') {
+                    badge.className = 'badge bg-secondary voucher-badge px-3 py-2';
+                    badge.innerText = 'Chưa chọn';
+                }
+            } else {
+                // Chưa đủ điều kiện: Mờ đi và khóa lại
+                card.classList.remove('bg-white', 'shadow-sm', 'border-primary', 'bg-primary-subtle');
+                card.classList.add('bg-light', 'text-muted', 'opacity-75');
+                badge.className = 'badge bg-secondary';
+                badge.innerText = 'Chưa đủ điều kiện';
+
+                // Nếu voucher đang chọn mà nay bị tụt giá không đủ điều kiện nữa thì hủy chọn
+                if (card.getAttribute('data-code') === activeCode) {
+                    activeCode = null;
+                    document.getElementById('selected_voucher_input').value = '';
+                }
+            }
+        });
+
+        // Nếu truyền trực tiếp phần trăm từ sự kiện click
+        if (forcedPercent !== null) {
+            currentPercent = forcedPercent;
+        } else if (activeCode) {
+            const activeCard = document.querySelector(`.voucher-card[data-code="${activeCode}"]`);
+            if (activeCard) {
+                currentPercent = parseInt(activeCard.getAttribute('data-percent')) || 0;
+            } else {
+                currentPercent = 0;
+            }
+        }
+
+        let discountAmount = currentSubtotal * (currentPercent / 100);
+        let finalPrice = currentSubtotal - discountAmount;
+        
+        document.getElementById('subtotal-display').innerText = currentSubtotal.toLocaleString('vi-VN') + ' VNĐ';
         document.getElementById('discount-display').innerText = discountAmount.toLocaleString('vi-VN');
         document.getElementById('final-price-display').innerText = finalPrice.toLocaleString('vi-VN') + ' VNĐ';
     }
+
     document.addEventListener('DOMContentLoaded', function () {
         const countInput = document.getElementById('passenger_count');
         const container = document.getElementById('passengers_list_container');
@@ -339,17 +393,27 @@ let discountAmount = subtotalVal * (percent / 100);
         const repNameInput = document.getElementById('rep_name');
         const repGenderSelect = document.querySelector('select[name="passenger_gender"]');
 
-        // Các biến cho phần chọn ghế
         const seatButtons = document.querySelectorAll('.seat-btn:not(.disabled)');
         const seatsInputsContainer = document.getElementById('selected-seats-inputs');
         let selectedSeats = [];
+
+        // Gắn sự kiện click cho các thẻ voucher động
+        document.querySelectorAll('.voucher-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const code = this.getAttribute('data-code');
+                const percent = parseInt(this.getAttribute('data-percent')) || 0;
+                toggleVoucher(code, percent, this);
+            });
+        });
 
         function updatePassengerFields() {
             const count = parseInt(countInput.value) || 1;
             container.innerHTML = '';
             hiddenDiv.innerHTML = '';
 
-            // Nếu số lượng vé giảm mà số ghế đang chọn vượt quá số vé mới, tự động cắt bớt
+            // Gọi updatePrice để tự động quét lại điều kiện voucher khi số lượng khách thay đổi
+            updatePrice();
+
             if (selectedSeats.length > count) {
                 selectedSeats = selectedSeats.slice(0, count);
                 rehighlightSeats();
@@ -357,7 +421,6 @@ let discountAmount = subtotalVal * (percent / 100);
             updateHiddenSeatInputs();
 
             if (count > 1) {
-                // Hiển thị phần nhập thông tin cho các hành khách từ số 2 trở đi
                 section.style.display = 'block';
                 for (let i = 2; i <= count; i++) {
                     const box = document.createElement('div');
@@ -376,16 +439,14 @@ let discountAmount = subtotalVal * (percent / 100);
                                     <option value="Nữ">Nữ</option>
                                 </select>
                             </div>
-</div>
+                        </div>
                     `;
                     container.appendChild(box);
                 }
             } else {
-                // Nếu chỉ có 1 hành khách, ẩn phần danh sách đi
                 section.style.display = 'none';
             }
 
-            // Đồng bộ hành khách số 1 (lấy trực tiếp từ Tên và Giới tính của người đại diện)
             const inputName1 = document.createElement('input');
             inputName1.type = 'hidden';
             inputName1.name = 'passengers[0][name]';
@@ -399,19 +460,16 @@ let discountAmount = subtotalVal * (percent / 100);
             hiddenDiv.appendChild(inputGender1);
         }
 
-        // --- XỬ LÝ SỰ KIỆN CLICK CHỌN GHẾ ---
         seatButtons.forEach(button => {
             button.addEventListener('click', function () {
                 const seatCode = this.getAttribute('data-seat');
                 const maxPassengers = parseInt(countInput.value) || 1;
 
                 if (selectedSeats.includes(seatCode)) {
-                    // Bỏ chọn nếu click lại ghế đã chọn
                     selectedSeats = selectedSeats.filter(s => s !== seatCode);
                     this.classList.remove('active', 'btn-success');
                     this.classList.add('btn-outline-primary');
                 } else {
-                    // Kiểm tra nếu vượt quá số lượng vé
                     if (selectedSeats.length >= maxPassengers) {
                         alert(`Bạn chỉ được chọn tối đa ${maxPassengers} ghế tương ứng với số lượng hành khách!`);
                         return;
@@ -425,7 +483,6 @@ let discountAmount = subtotalVal * (percent / 100);
             });
         });
 
-        // Tạo các input ẩn để gửi mã ghế lên Controller theo đúng thứ tự hành khách
         function updateHiddenSeatInputs() {
             if (!seatsInputsContainer) return;
             seatsInputsContainer.innerHTML = '';
@@ -438,10 +495,9 @@ let discountAmount = subtotalVal * (percent / 100);
             });
         }
 
-        // Cập nhật lại màu sắc các nút ghế khi thay đổi số lượng hành khách
         function rehighlightSeats() {
             seatButtons.forEach(btn => {
-const seatCode = btn.getAttribute('data-seat');
+                const seatCode = btn.getAttribute('data-seat');
                 if (!btn.classList.contains('disabled')) {
                     if (selectedSeats.includes(seatCode)) {
                         btn.classList.remove('btn-outline-primary');
@@ -454,7 +510,6 @@ const seatCode = btn.getAttribute('data-seat');
             });
         }
 
-        // Lắng nghe sự kiện khi người đại diện thay đổi Tên
         repNameInput.addEventListener('input', function() {
             const hiddenInputName1 = document.querySelector('input[name="passengers[0][name]"]');
             if (hiddenInputName1) {
@@ -462,7 +517,6 @@ const seatCode = btn.getAttribute('data-seat');
             }
         });
 
-        // Lắng nghe sự kiện khi người đại diện thay đổi Giới tính
         repGenderSelect.addEventListener('change', function() {
             const hiddenInputGender1 = document.querySelector('input[name="passengers[0][gender]"]');
             if (hiddenInputGender1) {
