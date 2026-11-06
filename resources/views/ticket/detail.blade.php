@@ -348,6 +348,9 @@
                 <button type="submit" class="btn btn-outline-danger btn-action">
                     <i class="fas fa-ban me-2"></i> Hủy vé máy bay
                 </button>
+                <button onclick="window.print()" class="btn btn-primary px-4 py-2">
+                    <i class="bi bi-printer me-1"></i> In / Tải vé
+                </button>
             </form>
         @else
             <div class="text-muted small"><i class="fas fa-info-circle me-1"></i> Vé này đã được hủy.</div>
