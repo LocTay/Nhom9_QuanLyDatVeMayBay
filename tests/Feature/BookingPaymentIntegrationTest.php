@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Airline;
 use App\Models\Airport;
 use App\Models\Booking;
 use App\Models\Flight;
@@ -12,8 +13,18 @@ class BookingPaymentIntegrationTest extends TestCase
 {
     use RefreshDatabase;
 
+
     private function createFlight(int $seats = 20): Flight
     {
+        $skyBooking = Airline::firstOrCreate(
+            ['code' => 'SB'],
+            [
+                'name' => 'SkyBooking Airlines',
+                'country' => 'Việt Nam',
+                'is_active' => true,
+            ]
+        );
+
         $departure = Airport::create([
             'code' => 'SGN',
             'name' => 'Tân Sơn Nhất',
@@ -29,7 +40,8 @@ class BookingPaymentIntegrationTest extends TestCase
         ]);
 
         return Flight::create([
-            'flight_number' => 'VN123',
+            'flight_number' => 'SB123',
+            'airline_id' => $skyBooking->id,
             'departure_airport_id' => $departure->id,
             'arrival_airport_id' => $arrival->id,
             'departure_time' => now()->addDays(5),
@@ -180,5 +192,57 @@ class BookingPaymentIntegrationTest extends TestCase
 
         $this->assertDatabaseCount('bookings', 0);
         $this->assertEquals(1, $flight->fresh()->available_seats);
+    }
+
+
+    public function test_customer_cannot_book_flight_from_another_airline(): void
+    {
+        $flight = $this->createFlight();
+
+        $otherAirline = Airline::create([
+            'code' => 'VN',
+            'name' => 'Vietnam Airlines',
+            'country' => 'Việt Nam',
+            'is_active' => true,
+        ]);
+
+        $flight->update([
+            'airline_id' => $otherAirline->id,
+        ]);
+
+        $response = $this->post(
+            route('booking.store'),
+            $this->bookingData($flight)
+        );
+
+        $response->assertNotFound();
+
+        $this->assertDatabaseCount('bookings', 0);
+        $this->assertEquals(
+            20,
+            $flight->fresh()->available_seats
+        );
+    }
+
+    public function test_customer_cannot_open_booking_form_of_other_airline(): void
+    {
+        $flight = $this->createFlight();
+
+        $otherAirline = Airline::create([
+            'code' => 'VN',
+            'name' => 'Vietnam Airlines',
+            'country' => 'Việt Nam',
+            'is_active' => true,
+        ]);
+
+        $flight->update([
+            'airline_id' => $otherAirline->id,
+        ]);
+
+        $this->get(route('booking.create', [
+            'flight_id' => $flight->id,
+        ]))->assertNotFound();
+
+        $this->assertDatabaseCount('bookings', 0);
     }
 }

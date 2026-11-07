@@ -55,22 +55,10 @@
         </div>
 
         <div class="form-group">
-            <label for="airline_id">Hãng hàng không</label>
-
-            <select id="airline_id" name="airline_id">
-                <option value="">-- Chưa chọn hãng --</option>
-
-                @foreach($airlines as $airline)
-                <option value="{{ $airline->id }}"
-                    @selected(old('airline_id', $flight->airline_id) == $airline->id)>
-                    {{ $airline->name }} ({{ $airline->code }})
-                </option>
-                @endforeach
-            </select>
-
-            @error('airline_id')
-            <div class="text-danger">{{ $message }}</div>
-            @enderror
+            <label>Hãng hàng không</label>
+            <div>
+                {{ $flight->airline?->name ?? 'Chưa gán hãng' }}
+            </div>
         </div>
 
         <div class="flight-form-grid">

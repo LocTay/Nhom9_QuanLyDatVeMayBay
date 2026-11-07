@@ -12,11 +12,11 @@ class FlightController extends Controller
         $diemDi = $request->input('diem_di');
         $diemDen = $request->input('diem_den');
         $ngayDi = $request->input('ngay_di');
-        
+
         // Lấy thông tin loại chuyến và ngày về từ request của trang chủ
         $loaiChuyen = $request->input('loai_chuyen', $request->input('trip_type', 'mot_chieu'));
         $ngayVe = $request->input('ngay_ve');
-        
+
         // Bắt số lượng hành khách từ trang chủ (name="hanh_khach"), mặc định là 1 nếu không có
         $passengerCount = $request->input('hanh_khach', 1);
 
@@ -26,6 +26,12 @@ class FlightController extends Controller
         if ($diemDi && $diemDen && $ngayDi) {
             // Truy vấn danh sách chuyến bay chiều đi
             $query = DB::table('flights')
+                ->whereIn('flights.airline_id', function ($query) {
+                    $query->select('id')
+                        ->from('airlines')
+                        ->where('code', 'SB')
+                        ->where('is_active', true);
+                })
                 ->join(
                     'airports as san_bay_di',
                     'flights.departure_airport_id',
@@ -63,6 +69,12 @@ class FlightController extends Controller
                 } else {
                     // 1. LẤY DANH SÁCH CÁC CHUYẾN BAY CHIỀU VỀ THỰC TẾ
                     $chuyenBayVes = DB::table('flights')
+                        ->whereIn('flights.airline_id', function ($query) {
+                            $query->select('id')
+                                ->from('airlines')
+                                ->where('code', 'SB')
+                                ->where('is_active', true);
+                        })
                         ->join('airports as san_bay_di', 'flights.departure_airport_id', '=', 'san_bay_di.id')
                         ->join('airports as san_bay_den', 'flights.arrival_airport_id', '=', 'san_bay_den.id')
                         ->where('san_bay_di.code', $diemDen) // Đảo chiều: xuất phát từ điểm đến cũ
