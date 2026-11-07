@@ -16,7 +16,11 @@ class BookingController extends Controller
     // Trang nhập thông tin đặt vé
     public function create(Request $request, $id)
     {
-        $flight = Flight::findOrFail($id);
+        $flight = Flight::whereKey($id)
+            ->whereHas('airline', function ($query) {
+                $query->where('code', 'SB');
+            })
+            ->firstOrFail();
 
         // Không cho đặt vé nếu chuyến bay đã khởi hành
         // hoặc còn dưới 3 tiếng nữa là khởi hành
@@ -168,7 +172,11 @@ class BookingController extends Controller
             'passenger_phone.regex' => 'Số điện thoại không hợp lệ (phải bắt đầu bằng số 0 và có từ 10 đến 11 chữ số).',
         ]);
 
-        $flight = Flight::findOrFail($validated['flight_id']);
+        $flight = Flight::whereKey($validated['flight_id'])
+            ->whereHas('airline', function ($query) {
+                $query->where('code', 'SB');
+            })
+            ->firstOrFail();
         $passengerCount = (int) $validated['passenger_count'];
 
         // Kiểm tra thời gian khởi hành
@@ -214,10 +222,13 @@ class BookingController extends Controller
                     ->withInput();
             }
 
-            $hasReturnFlight = Flight::where(
-                'departure_airport_id',
-                $flight->arrival_airport_id
-            )
+            $hasReturnFlight = Flight::whereHas('airline', function ($query) {
+                $query->where('code', 'SB');
+            })
+                ->where(
+                    'departure_airport_id',
+                    $flight->arrival_airport_id
+                )
                 ->where(
                     'arrival_airport_id',
                     $flight->departure_airport_id
@@ -298,6 +309,9 @@ class BookingController extends Controller
         ) {
             // Khóa chuyến bay để tránh hai người đặt cùng lúc
             $lockedFlight = Flight::whereKey($validated['flight_id'])
+                ->whereHas('airline', function ($query) {
+                    $query->where('code', 'SB');
+                })
                 ->lockForUpdate()
                 ->firstOrFail();
 

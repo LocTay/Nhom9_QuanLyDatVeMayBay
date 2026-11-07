@@ -29,14 +29,7 @@ class AdminFlightController extends Controller
     {
         $airports = Airport::orderBy('city')->get();
 
-        $airlines = Airline::where('is_active', true)
-            ->orderBy('name')
-            ->get();
-
-        return view('admin.flights.create', compact(
-            'airports',
-            'airlines'
-        ));
+        return view('admin.flights.create', compact('airports'));
     }
 
     // Lưu chuyến bay mới
@@ -46,7 +39,17 @@ class AdminFlightController extends Controller
             'flight_number' => strtoupper(trim($request->flight_number ?? '')),
         ]);
 
+        // Không nhận lựa chọn hãng từ người dùng.
+        $request->request->remove('airline_id');
+
         $validated = $request->validate($this->rules());
+
+        // Tự động gán tất cả chuyến bay mới cho SkyBooking.
+        $skyBooking = Airline::where('code', 'SB')
+            ->where('is_active', true)
+            ->firstOrFail();
+
+        $validated['airline_id'] = $skyBooking->id;
 
         Flight::create($validated);
 
@@ -54,30 +57,25 @@ class AdminFlightController extends Controller
             ->route('admin.flights.index')
             ->with('success', 'Thêm chuyến bay thành công.');
     }
-
     // Form chỉnh sửa
     public function edit(Flight $flight)
     {
         $airports = Airport::orderBy('city')->get();
 
-        $airlines = Airline::where('is_active', true)
-            ->orWhere('id', $flight->airline_id)
-            ->orderBy('name')
-            ->get();
-
         return view('admin.flights.edit', compact(
             'flight',
-            'airports',
-            'airlines'
+            'airports'
         ));
     }
-
     // Cập nhật chuyến bay
     public function update(Request $request, Flight $flight)
     {
         $request->merge([
             'flight_number' => strtoupper(trim($request->flight_number ?? '')),
         ]);
+
+        // Không cho thay đổi hãng thông qua form chỉnh sửa.
+        $request->request->remove('airline_id');
 
         $validated = $request->validate($this->rules($flight));
 
@@ -120,9 +118,7 @@ class AdminFlightController extends Controller
 
         // Tương thích với các request cũ không gửi airline_id.
         // Nếu thiếu trường này, giữ nguyên hãng đang được gán.
-        if (!$request->exists('airline_id')) {
-            $validated['airline_id'] = $flight->airline_id;
-        }
+        $validated['airline_id'] = $flight->airline_id;
 
         $flight->update($validated);
 

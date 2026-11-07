@@ -1415,12 +1415,6 @@
                 <span>Quản lý sân bay</span>
             </a>
 
-            <a href="{{ route('admin.airlines.index') }}"
-                class="side-link {{ request()->routeIs('admin.airlines.*') ? 'active' : '' }}">
-                <span class="side-icon">✈</span>
-                <span>Quản lý hãng hàng không</span>
-            </a>
-
             <a href="{{ route('admin.flights.index') }}"
                 class="side-link {{ request()->routeIs('admin.flights.*') ? 'active' : '' }}">
                 <span class="side-icon">✈</span>
