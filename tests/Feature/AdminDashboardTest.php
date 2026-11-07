@@ -53,7 +53,7 @@ class AdminDashboardTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.dashboard'))
             ->assertOk()
-            ->assertSee('Tổng quan hệ thống SkyBooking')
+            ->assertSee('Trung tâm quản trị')
             ->assertSee('Quản lý sân bay')
             ->assertSee('Quản lý chuyến bay')
             ->assertSee('Quản lý hóa đơn')

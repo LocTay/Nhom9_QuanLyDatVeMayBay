@@ -1,6 +1,6 @@
-
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -62,7 +62,7 @@
         .circle {
             position: absolute;
             border-radius: 50%;
-            background: rgba(255,255,255,0.06);
+            background: rgba(255, 255, 255, 0.06);
         }
 
         .circle-one {
@@ -85,7 +85,7 @@
             background: white;
             border-radius: 22px;
             overflow: hidden;
-            box-shadow: 0 25px 70px rgba(0,0,0,0.25);
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.25);
             position: relative;
             z-index: 1;
             animation: fadeIn 0.7s ease;
@@ -102,8 +102,8 @@
             width: 75px;
             height: 75px;
             margin: 0 auto 15px;
-            background: rgba(255,255,255,0.18);
-            border: 1px solid rgba(255,255,255,0.3);
+            background: rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -162,7 +162,7 @@
 
         .form-control-custom:focus {
             border-color: #1683c7;
-            box-shadow: 0 0 0 4px rgba(22,131,199,0.12);
+            box-shadow: 0 0 0 4px rgba(22, 131, 199, 0.12);
         }
 
         .form-control-custom::placeholder {
@@ -182,12 +182,12 @@
             font-weight: 700;
             margin-top: 25px;
             transition: all 0.3s ease;
-            box-shadow: 0 7px 18px rgba(7,104,183,0.25);
+            box-shadow: 0 7px 18px rgba(7, 104, 183, 0.25);
         }
 
         .btn-lookup:hover {
             transform: translateY(-3px);
-            box-shadow: 0 12px 25px rgba(7,104,183,0.35);
+            box-shadow: 0 12px 25px rgba(7, 104, 183, 0.35);
             color: white;
             background: linear-gradient(135deg, #0565ad, #063e82);
         }
@@ -219,7 +219,7 @@
             padding: 20px 10px;
             color: #d5e8fa;
             font-size: 13px;
-            background: rgba(5,22,48,0.35);
+            background: rgba(5, 22, 48, 0.35);
         }
 
         @keyframes fadeIn {
@@ -227,6 +227,7 @@
                 opacity: 0;
                 transform: translateY(25px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -263,9 +264,11 @@
             </a>
 
             <span class="nav-text">
-                <a href="{{ url('/') }}" class="btn btn-primary btn-action">
-                <i class="fas fa-home me-2"></i> Quay lại trang chủ
-            </a>
+                <a href="{{ auth()->check() && auth()->user()->role === 'admin'
+    ? route('admin.dashboard')
+    : url('/') }}" class="back">
+                    ← Quay lại trang chủ
+                </a>
             </span>
         </div>
     </nav>
@@ -295,10 +298,10 @@
             <div class="card-body-custom">
 
                 @if(session('error'))
-                    <div class="alert alert-danger mb-4">
-                        <i class="fas fa-exclamation-circle me-2"></i>
-                        {{ session('error') }}
-                    </div>
+                <div class="alert alert-danger mb-4">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    {{ session('error') }}
+                </div>
                 @endif
 
                 <form action="{{ route('ticket.lookup') }}" method="POST">
@@ -320,8 +323,7 @@
                                 placeholder="Nhập mã đặt chỗ, ví dụ: VN101"
                                 value="{{ old('booking_code') }}"
                                 maxlength="20"
-                                required
-                            >
+                                required>
                         </div>
 
                         <small class="text-muted mt-2 d-block">
@@ -359,4 +361,5 @@
     </footer>
 
 </body>
+
 </html>

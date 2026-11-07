@@ -63,11 +63,11 @@
     <div class="card shadow-sm">
         <form action="{{ route('booking.store') }}" method="POST">
             @csrf
-            
+
             @php
                 $rawTrip = $tripType ?? request('trip_type', request('loai_chuyen', 'one_way'));
                 $rawClass = $flightClass ?? request('flight_class', request('hang_ve', 'pho_thong'));
-                
+
                 $classMap = [
                     'pho_thong' => 'Phổ thông',
                     'pho_thong_dac_biet' => 'Phổ thông đặc biệt',
@@ -102,7 +102,7 @@
                         <label class="form-label fw-bold">Họ và tên người đại diện</label>
                         <input type="text" name="passenger_name" id="rep_name" class="form-control" value="{{ old('passenger_name') }}" placeholder="VD: Nguyễn Văn A" required>
                     </div>
-                    
+
                     <!-- Giới tính người đại diện -->
                     <div class="col-md-4 mb-3">
                         <label class="form-label fw-bold">Giới tính</label>
@@ -139,7 +139,7 @@
             <!-- Khung sơ đồ chọn ghế trực quan (Lọc theo hạng vé) -->
             <div class="card p-3 mb-4 border shadow-sm bg-light">
                 <h5 class="fw-bold text-primary mb-3"><i class="bi bi-grid-3x3-gap-fill me-2"></i>Sơ đồ chọn ghế ngồi</h5>
-                
+
                 <!-- Chú thích trạng thái ghế -->
                 <div class="d-flex gap-3 mb-3 text-muted" style="font-size: 14px;">
                     <div><span class="badge bg-white border text-dark">&nbsp;&nbsp;&nbsp;</span> Trống</div>
@@ -153,12 +153,12 @@
                         <label class="form-label fw-bold text-secondary">Khoang Thương gia (Ghế A1 - A10)</label>
                         <div class="row row-cols-5 g-2 mb-3">
                             @for($i = 1; $i <= 10; $i++)
-                                @php 
-                                    $seatCode = 'A' . $i; 
-                                    $isBooked = in_array($seatCode, $bookedSeats ?? []); 
+                                @php
+                                    $seatCode = 'A' . $i;
+                                    $isBooked = in_array($seatCode, $bookedSeats ?? []);
                                 @endphp
                                 <div class="col">
-                                    <button type="button" class="btn w-100 seat-btn {{ $isBooked ? 'btn-secondary disabled' : 'btn-outline-primary' }}" 
+                                    <button type="button" class="btn w-100 seat-btn {{ $isBooked ? 'btn-secondary disabled' : 'btn-outline-primary' }}"
                                             data-seat="{{ $seatCode }}" {{ $isBooked ? 'disabled' : '' }}>
                                         {{ $seatCode }}
                                     </button>
@@ -172,12 +172,12 @@
                         <label class="form-label fw-bold text-secondary">Khoang Phổ thông đặc biệt (Ghế B1 - B10)</label>
                         <div class="row row-cols-5 g-2 mb-3">
                             @for($i = 1; $i <= 10; $i++)
-                                @php 
-                                    $seatCode = 'B' . $i; 
-                                    $isBooked = in_array($seatCode, $bookedSeats ?? []); 
+                                @php
+                                    $seatCode = 'B' . $i;
+                                    $isBooked = in_array($seatCode, $bookedSeats ?? []);
                                 @endphp
                                 <div class="col">
-                                    <button type="button" class="btn w-100 seat-btn {{ $isBooked ? 'btn-secondary disabled' : 'btn-outline-warning' }}" 
+                                    <button type="button" class="btn w-100 seat-btn {{ $isBooked ? 'btn-secondary disabled' : 'btn-outline-warning' }}"
                                             data-seat="{{ $seatCode }}" {{ $isBooked ? 'disabled' : '' }}>
                                         {{ $seatCode }}
                                     </button>
@@ -194,12 +194,12 @@
                         </div>
                         <div class="row row-cols-5 g-2" style="max-height: 300px; overflow-y: auto; padding-right: 5px;">
                             @for($i = 1; $i <= $maxSeats['C']; $i++)
-                                @php 
-                                    $seatCode = 'C' . $i; 
-                                    $isBooked = in_array($seatCode, $bookedSeats ?? []); 
+                                @php
+                                    $seatCode = 'C' . $i;
+                                    $isBooked = in_array($seatCode, $bookedSeats ?? []);
                                 @endphp
                                 <div class="col">
-                                    <button type="button" class="btn w-100 seat-btn {{ $isBooked ? 'btn-secondary disabled' : 'btn-outline-success' }}" 
+                                    <button type="button" class="btn w-100 seat-btn {{ $isBooked ? 'btn-secondary disabled' : 'btn-outline-success' }}"
                                             data-seat="{{ $seatCode }}" {{ $isBooked ? 'disabled' : '' }}>
                                         {{ $seatCode }}
                                     </button>
@@ -215,7 +215,7 @@
                 <!-- === KHUNG CHỌN MÃ ƯU ĐÃI (TOGGLE VOUCHER) === -->
             <div class="card p-3 mb-4 border shadow-sm bg-light">
                 <h5 class="fw-bold text-primary mb-3"><i class="bi bi-tag-fill me-2"></i>Chọn mã ưu đãi / khuyến mãi</h5>
-                
+
                 @if(isset($availableVouchers) && count($availableVouchers) > 0)
                     <div id="vouchers-list">
                         @foreach($availableVouchers as $voucher)
@@ -235,7 +235,7 @@
                                         </h6>
                                         <small class="text-muted">Áp dụng cho đơn hàng từ {{ number_format($voucher['min_spend']) }} VNĐ trở lên</small>
                                     </div>
-                                    
+
                                     <div>
                                         @if($isEligible)
                                             <span class="badge bg-secondary voucher-badge px-3 py-2">Chưa chọn</span>
@@ -317,7 +317,7 @@
             element.classList.add('border-primary', 'bg-primary-subtle');
             badge.className = 'badge bg-success voucher-badge px-3 py-2';
             badge.innerText = 'Đang áp dụng ✓';
-            
+
             updatePrice(percent);
         }
     }
@@ -326,11 +326,11 @@
     function updatePrice(forcedPercent = null) {
         const countInput = document.getElementById('passenger_count');
         const passengerCount = parseInt(countInput.value) || 1;
-        
+
         const currentSubtotal = baseSubtotalVal * passengerCount;
-        
+
         let currentPercent = 0;
-        
+
         // Kiểm tra và cập nhật trạng thái sáng/mờ của từng voucher dựa trên tổng tiền mới
         document.querySelectorAll('.voucher-card').forEach(card => {
             const minSpend = parseInt(card.getAttribute('data-min-spend')) || 0;
@@ -341,7 +341,7 @@
                 // Đủ điều kiện: Sáng lên và cho phép click
                 card.classList.remove('bg-light', 'text-muted', 'opacity-75');
                 card.classList.add('bg-white', 'shadow-sm');
-                
+
                 if (card.getAttribute('data-code') === activeCode) {
                     badge.className = 'badge bg-success voucher-badge px-3 py-2';
                     badge.innerText = 'Đang áp dụng ✓';
@@ -379,7 +379,7 @@
 
         let discountAmount = currentSubtotal * (currentPercent / 100);
         let finalPrice = currentSubtotal - discountAmount;
-        
+
         document.getElementById('subtotal-display').innerText = currentSubtotal.toLocaleString('vi-VN') + ' VNĐ';
         document.getElementById('discount-display').innerText = discountAmount.toLocaleString('vi-VN');
         document.getElementById('final-price-display').innerText = finalPrice.toLocaleString('vi-VN') + ' VNĐ';
