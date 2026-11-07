@@ -59,24 +59,43 @@ class PaymentController extends Controller
     }
 
     // 4. Xử lý mô phỏng thanh toán
-    public function processPayment(Request $request, $booking_code)
-    {
-        $booking = Booking::where('pnr_code', $booking_code)
-            ->orWhere('booking_code', $booking_code)
+    
+// 4. Xử lý mô phỏng thanh toán
+public function processPayment(
+    Request $request,
+    $booking_code,
+    BookingApprovalService $approvalService
+) {
+    $result = DB::transaction(function () use ($request, $booking_code) {
+        $booking = Booking::where(function ($query) use ($booking_code) {
+            $query->where('pnr_code', $booking_code)
+                ->orWhere('booking_code', $booking_code);
+        })
+            ->lockForUpdate()
             ->firstOrFail();
 
         if ($booking->status === 'paid') {
-            return redirect()->back()->with(
-                'info',
-                'Vé này đã được thanh toán trước đó.'
-            );
+            return 'already_paid';
         }
 
-        if (in_array($booking->status, ['cancelled', 'pending_approval'], true)) {
-            return redirect()->back()->with(
-                'error',
-                'Vé không thể thực hiện thanh toán ở trạng thái hiện tại!'
-            );
+        if ($booking->status === 'cancelled') {
+            return 'cancelled';
+        }
+
+        if ($booking->status === 'pending_approval') {
+            return 'pending_approval';
+        }
+
+        if (!in_array($booking->status, ['pending', 'failed'], true)) {
+            return 'invalid_status';
+        }
+
+        // Kiểm tra thời hạn thanh toán 2 phút
+        if (
+            $booking->payment_expires_at &&
+            $booking->payment_expires_at->lte(now())
+        ) {
+            return 'expired_unpaid';
         }
 
         $paymentStatus = $request->input('payment_status', 'success');
@@ -84,49 +103,169 @@ class PaymentController extends Controller
         if ($paymentStatus === 'success') {
             $booking->status = 'paid';
             $booking->payment_time = now();
+            $booking->payment_expires_at = null;
             $booking->save();
 
-            return redirect()->back()->with(
-                'success',
-                'Thanh toán thành công! Vé của bạn đã được xác nhận.'
-            );
+            return 'paid_now';
         }
 
         $booking->status = 'failed';
         $booking->save();
 
+        return 'failed';
+    });
+
+    // Đơn hết hạn phải được hủy và hoàn ghế
+    if ($result === 'expired_unpaid') {
+        $approvalService->cancelExpiredUnpaidBooking($booking_code);
+
+        return redirect()->back()->with(
+            'error',
+            'Đơn đã quá thời hạn thanh toán 2 phút và đã bị hủy.'
+        );
+    }
+
+    if ($result === 'already_paid') {
+        return redirect()->back()->with(
+            'info',
+            'Vé này đã được thanh toán trước đó.'
+        );
+    }
+
+    if ($result === 'cancelled') {
+        return redirect()->back()->with(
+            'error',
+            'Vé đã bị hủy, không thể thanh toán.'
+        );
+    }
+
+    if ($result === 'pending_approval') {
+        return redirect()->back()->with(
+            'info',
+            'Đơn đang chờ Admin duyệt chuyển khoản.'
+        );
+    }
+
+    if ($result === 'invalid_status') {
+        return redirect()->back()->with(
+            'error',
+            'Trạng thái vé không hợp lệ để thanh toán.'
+        );
+    }
+
+    if ($result === 'failed') {
         return redirect()->back()->with(
             'error',
             'Thanh toán thất bại! Vui lòng thử lại.'
         );
     }
 
+    return redirect()->back()->with(
+        'success',
+        'Thanh toán thành công! Vé của bạn đã được xác nhận.'
+    );
+}
+
+
     // 5. Quy tắc hủy vé hiện có
-    public function cancelTicket(Request $request, $booking_code)
-    {
-        $booking = Booking::with('flight')
-            ->where('pnr_code', $booking_code)
+    
+public function cancelTicket(Request $request, $booking_code)
+{
+    $result = DB::transaction(function () use ($booking_code) {
+
+        // Khóa đơn đặt vé để tránh xử lý hủy nhiều lần
+        $booking = Booking::where('pnr_code', $booking_code)
+            ->lockForUpdate()
             ->firstOrFail();
 
+        // Chỉ chủ sở hữu được hủy nếu đơn gắn với tài khoản
+        // Đơn đặt vé của khách không đăng nhập được tra cứu bằng PNR
+        if (
+            $booking->user_id !== null
+            && (int) $booking->user_id !== (int) Auth::id()
+        ) {
+            return 'forbidden';
+        }
+
+        // Không hoàn ghế nếu vé đã bị hủy trước đó
         if ($booking->status === 'cancelled') {
+            return 'already_cancelled';
+        }
+
+        // Đơn đang chờ Admin duyệt phải xử lý theo quy trình riêng
+        if ($booking->status === 'pending_approval') {
+            return 'pending_approval';
+        }
+
+        // Khóa chuyến bay liên quan
+        $flight = $booking->flight()
+            ->lockForUpdate()
+            ->first();
+
+        if (!$flight) {
+            return 'flight_not_found';
+        }
+
+        // Xác định số ghế cần hoàn trả
+        $seatCount = (int) (
+            $booking->passenger_count
+            ?: $booking->number_of_seats
+            ?: 1
+        );
+
+        if ($seatCount < 1) {
+            return 'invalid_seat_count';
+        }
+
+        // Cập nhật trạng thái đơn
+        $booking->status = 'cancelled';
+        $booking->cancellation_reason = 'Khách hàng chủ động hủy vé';
+        $booking->approval_expires_at = null;
+        $booking->save();
+
+        // Hoàn trả số ghế đã đặt
+        $flight->increment('available_seats', $seatCount);
+
+        return 'success';
+    });
+
+    // Trả thông báo tương ứng
+    switch ($result) {
+        case 'success':
+            return redirect()->back()->with(
+                'success',
+                'Hủy vé thành công. Số ghế đã được hoàn trả.'
+            );
+
+        case 'already_cancelled':
             return redirect()->back()->with(
                 'info',
                 'Vé này đã được hủy từ trước.'
             );
-        }
 
-        if (!$booking->flight) {
+        case 'forbidden':
+            abort(403, 'Bạn không có quyền hủy đặt vé này.');
+
+        case 'pending_approval':
             return redirect()->back()->with(
                 'error',
-                'Không tìm thấy thông tin chuyến bay liên quan đến vé này.'
+                'Đơn đang chờ Admin duyệt, không thể hủy bằng chức năng này.'
             );
-        }
 
-        return redirect()->back()->with(
-            'error',
-            'Chức năng hủy vé theo chính sách hiện chưa được hoàn thiện.'
-        );
+        case 'flight_not_found':
+            return redirect()->back()->with(
+                'error',
+                'Không tìm thấy chuyến bay liên quan đến vé này.'
+            );
+
+        default:
+            return redirect()->back()->with(
+                'error',
+                'Không thể thực hiện hủy vé. Vui lòng kiểm tra lại thông tin.'
+            );
     }
+}
+
 
     // 6. Lịch sử đặt vé
     public function history()
@@ -166,61 +305,95 @@ class PaymentController extends Controller
     }
 
     // 8. Khách xác nhận đã chuyển khoản
-    public function submitTransfer($booking_code)
-    {
-        $result = DB::transaction(function () use ($booking_code) {
-            $booking = Booking::where('booking_code', $booking_code)
-                ->lockForUpdate()
-                ->firstOrFail();
+    
+// 8. Khách xác nhận đã chuyển khoản
+public function submitTransfer(
+    $booking_code,
+    BookingApprovalService $approvalService
+) {
+    $result = DB::transaction(function () use ($booking_code) {
+        $booking = Booking::where(function ($query) use ($booking_code) {
+            $query->where('booking_code', $booking_code)
+                ->orWhere('pnr_code', $booking_code);
+        })
+            ->lockForUpdate()
+            ->firstOrFail();
 
-            if ($booking->status === 'paid') {
-                return 'paid';
-            }
-
-            if ($booking->status === 'cancelled') {
-                return 'cancelled';
-            }
-
-            if ($booking->status === 'pending_approval') {
-                return 'already_pending';
-            }
-
-            if (!in_array($booking->status, ['pending', 'failed'], true)) {
-                return 'invalid_status';
-            }
-
-            $booking->status = 'pending_approval';
-            $booking->payment_method = 'bank_transfer';
-            $booking->payment_confirmed_at = now();
-            $booking->approval_expires_at = now()->addMinutes(2);
-            $booking->save();
-
-            return 'submitted';
-        });
-
-        if ($result === 'paid') {
-            return redirect()->route('ticket.detail', $booking_code)
-                ->with('info', 'Vé này đã được thanh toán.');
+        if ($booking->status === 'paid') {
+            return 'paid';
         }
 
-        if ($result === 'cancelled') {
-            return redirect()->route('ticket.detail', $booking_code)
-                ->with('error', 'Vé đã bị hủy, không thể xác nhận chuyển khoản.');
+        if ($booking->status === 'cancelled') {
+            return 'cancelled';
         }
 
-        if ($result === 'already_pending') {
-            return redirect()->route('ticket.detail', $booking_code)
-                ->with('info', 'Đơn của bạn đang chờ Admin duyệt thanh toán.');
+        if ($booking->status === 'pending_approval') {
+            return 'already_pending';
         }
 
-        if ($result === 'invalid_status') {
-            return redirect()->route('ticket.detail', $booking_code)
-                ->with('error', 'Trạng thái vé không hợp lệ để xác nhận chuyển khoản.');
+        if (!in_array($booking->status, ['pending', 'failed'], true)) {
+            return 'invalid_status';
         }
+
+        // Không được xác nhận chuyển khoản sau khi đơn hết hạn
+        if (
+            $booking->payment_expires_at &&
+            $booking->payment_expires_at->lte(now())
+        ) {
+            return 'expired_unpaid';
+        }
+
+        // Chuyển sang quy trình chờ Admin duyệt riêng
+        $booking->status = 'pending_approval';
+        $booking->payment_method = 'bank_transfer';
+        $booking->payment_confirmed_at = now();
+        $booking->approval_expires_at = now()->addMinutes(2);
+
+        // Kết thúc thời hạn thanh toán ban đầu
+        $booking->payment_expires_at = null;
+
+        $booking->save();
+
+        return 'submitted';
+    });
+
+    if ($result === 'expired_unpaid') {
+        $approvalService->cancelExpiredUnpaidBooking($booking_code);
 
         return redirect()->route('ticket.detail', $booking_code)
-            ->with('success', 'Đã ghi nhận xác nhận chuyển khoản. Đơn đang chờ Admin duyệt trong 2 phút.');
+            ->with(
+                'error',
+                'Đơn đã hết hạn thanh toán và đã được tự động hủy.'
+            );
     }
+
+    if ($result === 'paid') {
+        return redirect()->route('ticket.detail', $booking_code)
+            ->with('info', 'Vé này đã được thanh toán.');
+    }
+
+    if ($result === 'cancelled') {
+        return redirect()->route('ticket.detail', $booking_code)
+            ->with('error', 'Vé đã bị hủy, không thể xác nhận chuyển khoản.');
+    }
+
+    if ($result === 'already_pending') {
+        return redirect()->route('ticket.detail', $booking_code)
+            ->with('info', 'Đơn của bạn đang chờ Admin duyệt thanh toán.');
+    }
+
+    if ($result === 'invalid_status') {
+        return redirect()->route('ticket.detail', $booking_code)
+            ->with('error', 'Trạng thái vé không hợp lệ để xác nhận chuyển khoản.');
+    }
+
+    return redirect()->route('ticket.detail', $booking_code)
+        ->with(
+            'success',
+            'Đã ghi nhận xác nhận chuyển khoản. Đơn đang chờ Admin duyệt trong 2 phút.'
+        );
+}
+
 
     // 9. Admin duyệt thanh toán
     public function adminApprovePayment(

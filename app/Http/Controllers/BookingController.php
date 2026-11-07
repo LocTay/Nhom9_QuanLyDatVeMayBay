@@ -394,6 +394,7 @@ class BookingController extends Controller
                 'booking_code' => $pnrCode,
                 'total_price' => $finalPrice,
                 'passengers_data' => $passengersWithSeats,
+                'payment_expires_at' => now()->addMinutes(2),
             ]);
 
             // Chỉ trừ ghế sau khi tạo booking thành công

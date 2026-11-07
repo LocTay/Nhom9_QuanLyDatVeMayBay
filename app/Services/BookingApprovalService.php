@@ -9,6 +9,40 @@ use Illuminate\Support\Facades\DB;
 class BookingApprovalService
 {
     /**
+     * Hủy đơn vừa đặt nhưng chưa thanh toán khi quá thời hạn.
+     */
+    public function cancelExpiredUnpaidBooking(string $bookingCode): string
+    {
+        return DB::transaction(function () use ($bookingCode) {
+            $booking = Booking::where('booking_code', $bookingCode)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$booking) {
+                return 'not_found';
+            }
+
+            if (!in_array($booking->status, ['pending', 'failed'], true)) {
+                return 'not_unpaid';
+            }
+
+            if (
+                !$booking->payment_expires_at ||
+                $booking->payment_expires_at->gt(now())
+            ) {
+                return 'not_expired';
+            }
+
+            $this->cancelLockedBooking(
+                $booking,
+                'Đơn tự động hủy do khách hàng chưa thanh toán trong 2 phút.'
+            );
+
+            return 'cancelled';
+        });
+    }
+
+    /**
      * Admin duyệt thanh toán khi đơn vẫn còn hạn.
      */
     public function approvePendingApproval(string $bookingCode): string
@@ -40,6 +74,7 @@ class BookingApprovalService
 
             $booking->status = 'paid';
             $booking->payment_time = now();
+            $booking->payment_expires_at = null;
             $booking->approval_expires_at = null;
             $booking->save();
 
@@ -48,7 +83,7 @@ class BookingApprovalService
     }
 
     /**
-     * Hủy đơn đang chờ duyệt.
+     * Hủy đơn đang chờ Admin duyệt.
      */
     public function cancelPendingApproval(
         string $bookingCode,
@@ -74,8 +109,8 @@ class BookingApprovalService
     }
 
     /**
-     * Chỉ hoàn ghế khi đơn thực sự chuyển từ pending_approval sang cancelled.
-     * Việc khóa đơn và chuyến bay giúp tránh hoàn ghế hai lần.
+     * Hủy đơn và hoàn ghế trong cùng transaction.
+     * Khóa booking giúp ngăn hoàn ghế hai lần.
      */
     private function cancelLockedBooking(
         Booking $booking,
@@ -86,15 +121,20 @@ class BookingApprovalService
             ->first();
 
         if ($flight) {
-            $seats = $booking->passenger_count
+            $seats = (int) (
+                $booking->passenger_count
                 ?? $booking->number_of_seats
-                ?? 1;
+                ?? 1
+            );
 
-            $flight->increment('available_seats', $seats);
+            if ($seats > 0) {
+                $flight->increment('available_seats', $seats);
+            }
         }
 
         $booking->status = 'cancelled';
         $booking->cancellation_reason = $reason;
+        $booking->payment_expires_at = null;
         $booking->approval_expires_at = null;
         $booking->save();
     }

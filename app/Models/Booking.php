@@ -32,6 +32,7 @@ class Booking extends Model
 'approval_expires_at',
     'refund_status',
     'cancellation_reason',
+    'payment_expires_at',
 ];
 
     protected $casts = [
@@ -39,6 +40,7 @@ class Booking extends Model
     'payment_time' => 'datetime',
     'payment_confirmed_at' => 'datetime',
     'approval_expires_at' => 'datetime',
+    'payment_expires_at' => 'datetime',
 ];
 
     protected static function booted(): void
