@@ -1307,6 +1307,38 @@
                 flex-wrap: wrap;
             }
         }
+
+        /* CUSTOMER MANAGEMENT */
+
+        .customer-stats {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .customer-filters {
+            grid-template-columns: minmax(0, 1fr) auto;
+        }
+
+        .customer-filters .finance-filter-actions {
+            grid-column: auto;
+        }
+
+        @media (max-width: 1100px) {
+            .customer-stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 760px) {
+
+            .customer-stats,
+            .customer-filters {
+                grid-template-columns: 1fr;
+            }
+
+            .customer-filters .finance-filter-actions {
+                grid-column: auto;
+            }
+        }
     </style>
 </head>
 
@@ -1354,6 +1386,12 @@
                 class="side-link {{ request()->routeIs('admin.refunds.*') ? 'active' : '' }}">
                 <span class="side-icon">↺</span>
                 <span>Quản lý hoàn tiền</span>
+            </a>
+
+            <a href="{{ route('admin.customers.index') }}"
+                class="side-link {{ request()->routeIs('admin.customers.*') ? 'active' : '' }}">
+                <span class="side-icon">♙</span>
+                <span>Quản lý khách hàng</span>
             </a>
         </nav>
 

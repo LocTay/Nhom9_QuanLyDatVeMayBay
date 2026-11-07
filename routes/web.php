@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 
+use App\Http\Controllers\AdminCustomerController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminRefundController;
 use App\Http\Controllers\FlightController;
@@ -119,6 +120,12 @@ Route::middleware(['role:admin'])
     ->name('admin.')
     ->group(function () {
 
+        // Quản lý khách hàng
+        Route::get('/customers', [AdminCustomerController::class, 'index'])
+            ->name('customers.index');
+
+        Route::get('/customers/{user}', [AdminCustomerController::class, 'show'])
+            ->name('customers.show');
         Route::resource('airports', AdminAirportController::class)
             ->except(['show']);
 
