@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Airline;
 use App\Models\Airport;
 use App\Models\Flight;
 use Illuminate\Http\Request;
@@ -13,8 +14,9 @@ class AdminFlightController extends Controller
     public function index()
     {
         $flights = Flight::with([
+            'airline',
             'departureAirport',
-            'arrivalAirport'
+            'arrivalAirport',
         ])
             ->orderByDesc('departure_time')
             ->paginate(10);
@@ -27,7 +29,14 @@ class AdminFlightController extends Controller
     {
         $airports = Airport::orderBy('city')->get();
 
-        return view('admin.flights.create', compact('airports'));
+        $airlines = Airline::where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.flights.create', compact(
+            'airports',
+            'airlines'
+        ));
     }
 
     // Lưu chuyến bay mới
@@ -51,7 +60,16 @@ class AdminFlightController extends Controller
     {
         $airports = Airport::orderBy('city')->get();
 
-        return view('admin.flights.edit', compact('flight', 'airports'));
+        $airlines = Airline::where('is_active', true)
+            ->orWhere('id', $flight->airline_id)
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.flights.edit', compact(
+            'flight',
+            'airports',
+            'airlines'
+        ));
     }
 
     // Cập nhật chuyến bay
@@ -67,6 +85,7 @@ class AdminFlightController extends Controller
         if ($flight->bookings()->exists()) {
             $protectedFields = [
                 'flight_number',
+                'airline_id',
                 'departure_airport_id',
                 'arrival_airport_id',
                 'departure_time',
@@ -77,7 +96,12 @@ class AdminFlightController extends Controller
 
             foreach ($protectedFields as $field) {
                 $oldValue = $flight->getAttribute($field);
-                $newValue = $validated[$field];
+
+                // Request cũ không gửi airline_id:
+                // giữ nguyên hãng hiện tại thay vì gây lỗi.
+                $newValue = array_key_exists($field, $validated)
+                    ? $validated[$field]
+                    : $oldValue;
 
                 if ($field === 'departure_time' || $field === 'arrival_time') {
                     $oldValue = \Carbon\Carbon::parse($oldValue)->format('Y-m-d H:i');
@@ -92,6 +116,12 @@ class AdminFlightController extends Controller
                         ->withInput();
                 }
             }
+        }
+
+        // Tương thích với các request cũ không gửi airline_id.
+        // Nếu thiếu trường này, giữ nguyên hãng đang được gán.
+        if (!$request->exists('airline_id')) {
+            $validated['airline_id'] = $flight->airline_id;
         }
 
         $flight->update($validated);
@@ -131,6 +161,18 @@ class AdminFlightController extends Controller
                 'max:20',
                 Rule::unique('flights', 'flight_number')
                     ->ignore($flight?->id),
+            ],
+            'airline_id' => [
+                'nullable',
+                Rule::exists('airlines', 'id')->where(function ($query) use ($flight) {
+                    $query->where(function ($q) use ($flight) {
+                        $q->where('is_active', true);
+
+                        if ($flight?->airline_id !== null) {
+                            $q->orWhere('id', $flight->airline_id);
+                        }
+                    });
+                }),
             ],
             'departure_airport_id' => [
                 'required',

@@ -57,7 +57,7 @@
         </div>
 
         <a href="{{ route('admin.flights.create') }}"
-           class="btn btn-gold">
+            class="btn btn-gold">
             + Thêm chuyến bay
         </a>
     </div>
@@ -67,6 +67,7 @@
             <thead>
                 <tr>
                     <th>Mã chuyến bay</th>
+                    <th>Hãng hàng không</th>
                     <th>Sân bay đi</th>
                     <th>Sân bay đến</th>
                     <th>Khởi hành</th>
@@ -80,113 +81,128 @@
 
             <tbody>
                 @forelse ($flights as $flight)
-                    <tr>
-                        <td>
-                            <span class="flight-code-badge">
-                                {{ $flight->flight_number }}
-                            </span>
-                        </td>
+                <tr>
+                    <td>
+                        <span class="flight-code-badge">
+                            {{ $flight->flight_number }}
+                        </span>
+                    </td>
 
-                        <td>
-                            <div class="flight-route">
-                                {{ $flight->departureAirport?->city ?? 'N/A' }}
-                                <small>
-                                    {{ $flight->departureAirport?->code ?? 'N/A' }}
-                                </small>
-                            </div>
-                        </td>
+                    <td>
+                        @if($flight->airline)
+                        <span class="finance-person">
+                            {{ $flight->airline->name }}
+                        </span>
 
-                        <td>
-                            <div class="flight-route">
-                                {{ $flight->arrivalAirport?->city ?? 'N/A' }}
-                                <small>
-                                    {{ $flight->arrivalAirport?->code ?? 'N/A' }}
-                                </small>
-                            </div>
-                        </td>
+                        <span class="finance-subtext">
+                            {{ $flight->airline->code }}
+                        </span>
+                        @else
+                        <span class="text-muted">
+                            Chưa gán hãng
+                        </span>
+                        @endif
+                    </td>
 
-                        <td>
-                            {{ \Carbon\Carbon::parse($flight->departure_time)->format('d/m/Y') }}
-                            <div style="color:var(--muted);margin-top:5px;">
-                                {{ \Carbon\Carbon::parse($flight->departure_time)->format('H:i') }}
-                            </div>
-                        </td>
+                    <td>
+                        <div class="flight-route">
+                            {{ $flight->departureAirport?->city ?? 'N/A' }}
+                            <small>
+                                {{ $flight->departureAirport?->code ?? 'N/A' }}
+                            </small>
+                        </div>
+                    </td>
 
-                        <td>
-                            {{ \Carbon\Carbon::parse($flight->arrival_time)->format('d/m/Y') }}
-                            <div style="color:var(--muted);margin-top:5px;">
-                                {{ \Carbon\Carbon::parse($flight->arrival_time)->format('H:i') }}
-                            </div>
-                        </td>
+                    <td>
+                        <div class="flight-route">
+                            {{ $flight->arrivalAirport?->city ?? 'N/A' }}
+                            <small>
+                                {{ $flight->arrivalAirport?->code ?? 'N/A' }}
+                            </small>
+                        </div>
+                    </td>
 
-                        <td>
-                            <span class="flight-price">
-                                {{ number_format($flight->price, 0, ',', '.') }} đ
-                            </span>
-                        </td>
+                    <td>
+                        {{ \Carbon\Carbon::parse($flight->departure_time)->format('d/m/Y') }}
+                        <div style="color:var(--muted);margin-top:5px;">
+                            {{ \Carbon\Carbon::parse($flight->departure_time)->format('H:i') }}
+                        </div>
+                    </td>
 
-                        <td>
-                            <span class="flight-seats {{ $flight->available_seats == 0 ? 'empty' : '' }}">
-                                {{ $flight->available_seats }}
-                            </span>
-                        </td>
+                    <td>
+                        {{ \Carbon\Carbon::parse($flight->arrival_time)->format('d/m/Y') }}
+                        <div style="color:var(--muted);margin-top:5px;">
+                            {{ \Carbon\Carbon::parse($flight->arrival_time)->format('H:i') }}
+                        </div>
+                    </td>
 
-                        <td>
-                            @php
-                                $statuses = [
-                                    'scheduled' => ['Đã lên lịch', 'scheduled'],
-                                    'delayed' => ['Hoãn chuyến', 'delayed'],
-                                    'cancelled' => ['Đã hủy', 'cancelled'],
-                                    'completed' => ['Hoàn thành', 'completed'],
-                                ];
+                    <td>
+                        <span class="flight-price">
+                            {{ number_format($flight->price, 0, ',', '.') }} đ
+                        </span>
+                    </td>
 
-                                $status = $statuses[$flight->status]
-                                    ?? [$flight->status, 'default'];
-                            @endphp
+                    <td>
+                        <span class="flight-seats {{ $flight->available_seats == 0 ? 'empty' : '' }}">
+                            {{ $flight->available_seats }}
+                        </span>
+                    </td>
 
-                            <span class="flight-status flight-status-{{ $status[1] }}">
-                                {{ $status[0] }}
-                            </span>
-                        </td>
+                    <td>
+                        @php
+                        $statuses = [
+                        'scheduled' => ['Đã lên lịch', 'scheduled'],
+                        'delayed' => ['Hoãn chuyến', 'delayed'],
+                        'cancelled' => ['Đã hủy', 'cancelled'],
+                        'completed' => ['Hoàn thành', 'completed'],
+                        ];
 
-                        <td>
-                            <div class="actions">
-                                <a href="{{ route('admin.flights.edit', $flight) }}"
-                                   class="btn btn-primary">
-                                    Sửa
-                                </a>
+                        $status = $statuses[$flight->status]
+                        ?? [$flight->status, 'default'];
+                        @endphp
 
-                                <form
-                                    action="{{ route('admin.flights.destroy', $flight) }}"
-                                    method="POST"
-                                    onsubmit="return confirm('Bạn có chắc muốn xóa chuyến bay này?')"
-                                >
-                                    @csrf
-                                    @method('DELETE')
+                        <span class="flight-status flight-status-{{ $status[1] }}">
+                            {{ $status[0] }}
+                        </span>
+                    </td>
 
-                                    <button type="submit"
-                                            class="btn btn-danger">
-                                        Xóa
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
+                    <td>
+                        <div class="actions">
+                            <a href="{{ route('admin.flights.edit', $flight) }}"
+                                class="btn btn-primary">
+                                Sửa
+                            </a>
+
+                            <form
+                                action="{{ route('admin.flights.destroy', $flight) }}"
+                                method="POST"
+                                onsubmit="return confirm('Bạn có chắc muốn xóa chuyến bay này?')">
+                                @csrf
+                                @method('DELETE')
+
+                                <button type="submit"
+                                    class="btn btn-danger">
+                                    Xóa
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
                 @empty
-                    <tr>
-                        <td colspan="9" class="flight-empty">
-                            Chưa có chuyến bay nào trong hệ thống.
-                        </td>
-                    </tr>
+                <tr>
+                    <td colspan="10" class="flight-empty">
+                        Chưa có chuyến bay nào trong hệ thống.
+                    </td>
+                </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 
     @if ($flights->hasPages())
-        <div class="pagination">
-            {{ $flights->links() }}
-        </div>
+    <div class="pagination">
+        {{ $flights->links() }}
+    </div>
     @endif
 </div>
 
