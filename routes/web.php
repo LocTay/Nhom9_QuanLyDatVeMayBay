@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 
+use App\Http\Controllers\AdminAirlineController;
 use App\Http\Controllers\AdminCustomerController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminRefundController;
@@ -148,6 +149,10 @@ Route::middleware(['role:admin'])
 
         Route::post('/refunds/{booking}/complete', [AdminRefundController::class, 'complete'])
             ->name('refunds.complete');
+
+        // Quản lý hãng hàng không
+        Route::resource('airlines', AdminAirlineController::class)
+            ->except(['show']);
 
         // Dashboard Admin
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])

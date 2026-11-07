@@ -11,6 +11,7 @@ class Flight extends Model
 
     protected $fillable = [
         'flight_number',
+        'airline_id',
         'departure_airport_id',
         'arrival_airport_id',
         'departure_time',
@@ -38,4 +39,8 @@ class Flight extends Model
         return $this->hasMany(Booking::class);
     }
 
+    public function airline()
+    {
+        return $this->belongsTo(Airline::class);
+    }
 }

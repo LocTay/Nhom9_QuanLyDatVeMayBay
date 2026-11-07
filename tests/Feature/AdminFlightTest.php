@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Airline;
 use App\Models\Airport;
 use App\Models\Booking;
 use App\Models\Flight;
@@ -206,5 +207,184 @@ class AdminFlightTest extends TestCase
             'available_seats' => $flight->available_seats,
             'status' => $flight->status,
         ];
+    }
+
+    private function createAirline(string $code, string $name): Airline
+    {
+        return Airline::create([
+            'code' => $code,
+            'name' => $name,
+            'country' => 'Việt Nam',
+            'is_active' => true,
+        ]);
+    }
+
+    public function test_admin_can_assign_airline_when_creating_flight(): void
+    {
+        $airline = $this->createAirline('VN', 'Vietnam Airlines');
+
+        $data = $this->flightData();
+        $data['airline_id'] = $airline->id;
+
+        $this->actingAs($this->admin())
+            ->post(route('admin.flights.store'), $data)
+            ->assertRedirect(route('admin.flights.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('flights', [
+            'flight_number' => 'VN123',
+            'airline_id' => $airline->id,
+        ]);
+    }
+
+    public function test_admin_can_change_airline_when_flight_has_no_booking(): void
+    {
+        $airlineVN = $this->createAirline('VN', 'Vietnam Airlines');
+        $airlineVJ = $this->createAirline('VJ', 'Vietjet Air');
+
+        $flight = $this->flight();
+        $flight->update(['airline_id' => $airlineVN->id]);
+
+        $data = $this->flightDataForUpdate($flight);
+        $data['airline_id'] = $airlineVJ->id;
+
+        $this->actingAs($this->admin())
+            ->put(route('admin.flights.update', $flight), $data)
+            ->assertRedirect(route('admin.flights.index'))
+            ->assertSessionHas('success');
+
+        $this->assertEquals(
+            $airlineVJ->id,
+            $flight->fresh()->airline_id
+        );
+    }
+
+    public function test_admin_cannot_change_airline_when_flight_has_booking(): void
+    {
+        $airlineVN = $this->createAirline('VN', 'Vietnam Airlines');
+        $airlineVJ = $this->createAirline('VJ', 'Vietjet Air');
+
+        $flight = $this->flight();
+        $flight->update(['airline_id' => $airlineVN->id]);
+
+        $this->addBooking($flight);
+
+        $data = $this->flightDataForUpdate($flight);
+        $data['airline_id'] = $airlineVJ->id;
+
+        $this->actingAs($this->admin())
+            ->put(route('admin.flights.update', $flight), $data)
+            ->assertSessionHasErrors('airline_id');
+
+        $this->assertEquals(
+            $airlineVN->id,
+            $flight->fresh()->airline_id
+        );
+    }
+
+    public function test_admin_cannot_assign_nonexistent_airline(): void
+    {
+        $data = $this->flightData();
+        $data['airline_id'] = 999999;
+
+        $this->actingAs($this->admin())
+            ->post(route('admin.flights.store'), $data)
+            ->assertSessionHasErrors('airline_id');
+
+        $this->assertDatabaseCount('flights', 0);
+    }
+
+    public function test_admin_cannot_assign_inactive_airline_to_new_flight(): void
+    {
+        $airline = $this->createAirline('VN', 'Vietnam Airlines');
+
+        $airline->update(['is_active' => false]);
+
+        $data = $this->flightData();
+        $data['airline_id'] = $airline->id;
+
+        $this->actingAs($this->admin())
+            ->post(route('admin.flights.store'), $data)
+            ->assertSessionHasErrors('airline_id');
+
+        $this->assertDatabaseCount('flights', 0);
+    }
+
+    public function test_admin_can_keep_inactive_airline_on_existing_flight(): void
+    {
+        $airline = $this->createAirline('VN', 'Vietnam Airlines');
+
+        $flight = $this->flight();
+        $flight->update(['airline_id' => $airline->id]);
+
+        $airline->update(['is_active' => false]);
+
+        $data = $this->flightDataForUpdate($flight);
+        $data['airline_id'] = $airline->id;
+        $data['status'] = 'delayed';
+
+        $this->actingAs($this->admin())
+            ->put(route('admin.flights.update', $flight), $data)
+            ->assertRedirect(route('admin.flights.index'))
+            ->assertSessionHas('success');
+
+        $this->assertEquals(
+            $airline->id,
+            $flight->fresh()->airline_id
+        );
+
+        $this->assertEquals(
+            'delayed',
+            $flight->fresh()->status
+        );
+    }
+    public function test_admin_cannot_change_to_another_inactive_airline(): void
+    {
+        $airlineVN = $this->createAirline('VN', 'Vietnam Airlines');
+        $airlineVJ = $this->createAirline('VJ', 'Vietjet Air');
+
+        $airlineVJ->update(['is_active' => false]);
+
+        $flight = $this->flight();
+        $flight->update(['airline_id' => $airlineVN->id]);
+
+        $data = $this->flightDataForUpdate($flight);
+        $data['airline_id'] = $airlineVJ->id;
+
+        $this->actingAs($this->admin())
+            ->put(route('admin.flights.update', $flight), $data)
+            ->assertSessionHasErrors('airline_id');
+
+        $this->assertEquals(
+            $airlineVN->id,
+            $flight->fresh()->airline_id
+        );
+    }
+    public function test_updating_flight_without_airline_field_keeps_existing_airline(): void
+    {
+        $airline = $this->createAirline('VN', 'Vietnam Airlines');
+
+        $flight = $this->flight();
+        $flight->update([
+            'airline_id' => $airline->id,
+        ]);
+
+        $data = $this->flightDataForUpdate($flight);
+
+        // Mô phỏng request từ phiên bản cũ chưa hỗ trợ hãng.
+        unset($data['airline_id']);
+
+        $data['status'] = 'delayed';
+
+        $this->actingAs($this->admin())
+            ->put(route('admin.flights.update', $flight), $data)
+            ->assertRedirect(route('admin.flights.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('flights', [
+            'id' => $flight->id,
+            'airline_id' => $airline->id,
+            'status' => 'delayed',
+        ]);
     }
 }

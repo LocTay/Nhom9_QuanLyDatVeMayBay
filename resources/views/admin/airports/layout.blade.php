@@ -1339,6 +1339,51 @@
                 grid-column: auto;
             }
         }
+
+        /* AIRLINE MANAGEMENT */
+
+        .airline-stats {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .airline-filters {
+            grid-template-columns: minmax(0, 1fr) auto;
+        }
+
+        .airline-filters .finance-filter-actions {
+            grid-column: auto;
+        }
+
+        .airline-form-panel {
+            max-width: 1000px;
+        }
+
+        .airline-form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 22px;
+        }
+
+        .airline-error {
+            margin-top: 7px;
+            color: #bf3346;
+            font-size: 11px;
+        }
+
+        @media (max-width: 1100px) {
+            .airline-stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 760px) {
+
+            .airline-stats,
+            .airline-filters,
+            .airline-form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 
@@ -1368,6 +1413,12 @@
                 class="side-link {{ request()->routeIs('admin.airports.*') ? 'active' : '' }}">
                 <span class="side-icon">✧</span>
                 <span>Quản lý sân bay</span>
+            </a>
+
+            <a href="{{ route('admin.airlines.index') }}"
+                class="side-link {{ request()->routeIs('admin.airlines.*') ? 'active' : '' }}">
+                <span class="side-icon">✈</span>
+                <span>Quản lý hãng hàng không</span>
             </a>
 
             <a href="{{ route('admin.flights.index') }}"
